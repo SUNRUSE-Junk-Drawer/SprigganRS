@@ -2,8 +2,9 @@ language: node_js
 node_js:
 - node
 jobs:
-- stage: dummy
-  install:
-  - echo TODO install
-  script:
-  - echo TODO test
+  include:
+  - stage: dummy
+    install:
+    - echo TODO install
+    script:
+    - echo TODO test
