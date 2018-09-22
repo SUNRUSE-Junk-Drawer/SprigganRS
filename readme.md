@@ -47,7 +47,7 @@ const ui = () => {
 |---------|----------------|-----------|------------|
 | state   | Read/write     | Read-only | Read/write |
 | borders | No             | Read-only | No         |
-| times   | No             | Read-only | Read-only  |
+| times   | Read-only      | Read-only | Read-only  |
 
 ### state
 
