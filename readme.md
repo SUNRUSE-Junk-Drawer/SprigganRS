@@ -42,3 +42,15 @@ console.log(borders.right)  /* 324.78 */
 console.log(borders.top)    /* 0 */
 console.log(borders.bottom) /* 180 */
 ```
+
+#### times
+
+Elapsed times, in seconds.
+
+```js
+/* When the game has been running for 6.2 seconds, but the game was paused after 4.9. */
+console.log(times.game) /* 4.9 */
+console.log(times.ui)   /* 6.2 */
+```
+
+Note: it is important these be used over any external timers as they are monotonic, and will indicate the time for the event being processed, not the actual elapsed time.
