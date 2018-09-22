@@ -80,6 +80,18 @@ Note: it is important these be used over any external timers as they are monoton
 
 ## Functions
 
+| Name         | Initialization | Views | Callbacks |
+|--------------|----------------|-------|-----------|
+| move         | No             | Yes   | No        |
+| moveBetween  | No             | Yes   | No        |
+| moveAt       | No             | Yes   | No        |
+| scale        | No             | Yes   | No        |
+| scaleBetween | No             | Yes   | No        |
+| fade         | No             | Yes   | No        |
+| fadeBetween  | No             | Yes   | No        |
+| click        | No             | Yes   | No        |
+| at           | No             | Yes   | No        |
+
 ### Move
 
 Translates a child by a given number of units.
