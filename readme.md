@@ -91,6 +91,8 @@ Note: it is important these be used over any external timers as they are monoton
 | fadeBetween  | No             | Yes   | No        |
 | click        | No             | Yes   | No        |
 | at           | No             | Yes   | No        |
+| pause        | Yes            | No    | Yes       |
+| resume       | Yes            | No    | Yes       |
 
 ### Move
 
@@ -225,4 +227,20 @@ Executes a callback (and subsequently re-renders) at a specified time.
 at(46, () => {
   /* Called at 46 seconds of elapsed time. */
 })
+```
+
+### Pause
+
+Pauses the game timer.  Has no effect if already paused.
+
+```js
+pause()
+```
+
+### Resume
+
+Unpauses the game timer.  Has no effect if not paused.
+
+```js
+resume()
 ```
