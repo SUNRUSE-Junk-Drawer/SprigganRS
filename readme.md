@@ -13,9 +13,7 @@ All game state is stored in a JSON-serializable value called **state**.
 
 This is then converted into a **scene graph** by a function called a **view** which is interpreted to produce video, audio and points of interaction.
 
-## Scene Graph
-
-### Coordinate Space
+## Coordinate Space
 ```
                       .----------------.
 .-------------------. |░░░░░░░░░░░░░░░░|
@@ -29,9 +27,9 @@ A 16:9 "safe zone" (shown unshaded) is centered in the page and scaled to be as 
 
 The coordinate space is 320 "units" wide (X) and 180 "units" tall (Y), where 0, 0 is the top left corner.
 
-### Variables (read-only)
+## Variables (read-only)
 
-#### borders
+### borders
 
 Contains the borders of the page, in scene graph coordinates.
 
@@ -43,7 +41,7 @@ console.log(borders.top)    /* 0 */
 console.log(borders.bottom) /* 180 */
 ```
 
-#### times
+### times
 
 Elapsed times, in seconds.
 
@@ -55,9 +53,9 @@ console.log(times.ui)   /* 6.2 */
 
 Note: it is important these be used over any external timers as they are monotonic, and will indicate the time for the event being processed, not the actual elapsed time.
 
-### Functions
+## Functions
 
-#### Move
+### Move
 
 Translates a child by a given number of units.
 
@@ -107,7 +105,7 @@ scale(0.5, () => move(14, 6, () => {
 }))
 ```
 
-#### Scale
+### Scale
 
 Multiplies the size of a child scene graph by a given factor.
 
@@ -126,7 +124,7 @@ scaleBetween(2, 0.5, 3, 0.25, 46, 72, () => {
 })
 ```
 
-#### Fade
+### Fade
 
 Multiplies the opacity of a child scene graph by a given factor.
 Clamped to 0 and 1 at the time of emitting objects.
