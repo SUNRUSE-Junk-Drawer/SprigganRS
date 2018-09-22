@@ -152,3 +152,13 @@ click(() => {
   /* C. */
 })
 ```
+
+### Delays
+
+Executes a callback (and subsequently re-renders) at a specified time.
+
+```js
+at(46, () => {
+  /* Called at 46 seconds of elapsed time. */
+})
+```
