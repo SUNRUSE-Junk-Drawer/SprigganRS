@@ -66,14 +66,14 @@ move(14, 7, () => {
   /* The child scene graph to move 14 units right and 7 units down. */
 })
 
-moveBetween(14, 7, 11, 29, 46, 72, () => { 
+moveBetween(14, 7, 11, 29, 46, 72, () => {
   /* The child scene graph; linearly interpolates
      from 14 units right and 7 units down
      to 11 units right and 29 units down
-     between 46 and 72 seconds of elapsed time. */ 
+     between 46 and 72 seconds of elapsed time. */
 })
 
-moveAt(14, 7, 11, 29, 46, 2, () => { 
+moveAt(14, 7, 11, 29, 46, 2, () => {
   /* The child scene graph; linearly interpolates
      from 14 units right and 7 units down
      to 11 units right and 29 units down
