@@ -27,7 +27,32 @@ A 16:9 "safe zone" (shown unshaded) is centered in the page and scaled to be as 
 
 The coordinate space is 320 "units" wide (X) and 180 "units" tall (Y), where 0, 0 is the top left corner.
 
-## Variables (read-only)
+## Game script
+
+A game script is structured as follows:
+
+```js
+const game = () => {
+  /* View. */
+}
+
+const ui = () => {
+  /* View. */
+}
+```
+
+## Variables
+
+| Name    | Initialization | Views     | Callbacks  |
+|---------|----------------|-----------|------------|
+| state   | Read/write     | Read-only | Read/write |
+| borders | No             | Read-only | No         |
+| times   | No             | Read-only | Read-only  |
+
+### state
+
+The JSON-serializable game state.
+Initially an empty anonymous object.
 
 ### borders
 
