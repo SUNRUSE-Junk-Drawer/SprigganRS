@@ -54,3 +54,73 @@ console.log(times.ui)   /* 6.2 */
 ```
 
 Note: it is important these be used over any external timers as they are monotonic, and will indicate the time for the event being processed, not the actual elapsed time.
+
+### Functions
+
+#### Move
+
+Translates a child by a given number of units.
+
+```js
+move(14, 7, () => {
+  /* The child scene graph to move 14 units right and 7 units down. */
+})
+
+moveBetween(14, 7, 11, 29, 46, 72, () => { 
+  /* The child scene graph; linearly interpolates
+     from 14 units right and 7 units down
+     to 11 units right and 29 units down
+     between 46 and 72 seconds of elapsed time. */ 
+})
+
+moveAt(14, 7, 11, 29, 46, 2, () => { 
+  /* The child scene graph; linearly interpolates
+     from 14 units right and 7 units down
+     to 11 units right and 29 units down
+     at 2 units per second starting at 46 seconds of elapsed time. */
+})
+```
+
+Note: if wrapped in a scaling function, the move itself will be scaled:
+
+```js
+scale(0.5, () => move(14, 6, () => {
+  /* Actually moves 7, 3 units. */
+}))
+```
+
+#### Scale
+
+Multiplies the size of a child scene graph by a given factor.
+
+```js
+scale(2, 0.5, () => {
+  /* The child scene graph to double in size on the X axis and halve in size on the Y axis. */
+})
+
+scaleBetween(2, 0.5, 3, 0.25, 46, 72, () => {
+  /* The child scene graph; linearly interpolates
+     from doubling in size on the X axis and halving in size on the Y axis
+     to tripling in size on the X axis in dividing its size by 4 four on the Y axis
+     between 46 and 72 seconds of elapsed time. */
+})
+```
+
+#### Fade
+
+Multiplies the opacity of a child scene graph by a given factor.
+Clamped to 0 and 1 at the time of emitting objects.
+This additionally adjusts the volume of sounds.
+
+```js
+fade(0.5, () => {
+  /* The child scene graph to make semi-transparent. */
+})
+
+fadeBetween(0.25, 0.75, 46, 72, () => {
+  /* The child scene graph; linearly interpolates
+     from 25% opacity
+     to 75% opacity
+     between 46 and 72 seconds of elapsed time. */
+})
+```
