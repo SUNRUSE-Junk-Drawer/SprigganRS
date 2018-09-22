@@ -91,6 +91,8 @@ Note: it is important these be used over any external timers as they are monoton
 | fadeBetween  | No             | Yes   | No        |
 | click        | No             | Yes   | No        |
 | at           | No             | Yes   | No        |
+| batch        | No             | Yes   | No        |
+| keepBatch    | No             | Yes   | No        |
 | pause        | Yes            | No    | Yes       |
 | resume       | Yes            | No    | Yes       |
 
@@ -227,6 +229,20 @@ Executes a callback (and subsequently re-renders) at a specified time.
 at(46, () => {
   /* Called at 46 seconds of elapsed time. */
 })
+```
+
+### Batch
+
+Caches a complex child scene graph, meaning it is only generated once.
+
+```js
+batch(`Object Name`, `Cache Key`, () => { /* Scene graph to draw. */ })
+```
+
+Note: the cache will be dropped if it is not used during a scene.  Call keepBatch to keep it cached without actually drawing it.
+
+```js
+keepBatch(`Cache Key`, () => { /* Scene graph to cache, but not draw. */ })
 ```
 
 ### Pause
