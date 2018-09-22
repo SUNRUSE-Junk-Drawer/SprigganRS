@@ -73,11 +73,29 @@ moveBetween(14, 7, 11, 29, 46, 72, () => {
      between 46 and 72 seconds of elapsed time. */
 })
 
+moveBetween(14, 7, 11, 29, 46, 72, () => {
+  /* The child scene graph; linearly interpolates
+     from 14 units right and 7 units down
+     to 11 units right and 29 units down
+     between 46 and 72 seconds of elapsed time. */
+}, () => {
+  /* Callback executed at 72 seconds of elapsed time. */
+})
+
 moveAt(14, 7, 11, 29, 46, 2, () => {
   /* The child scene graph; linearly interpolates
      from 14 units right and 7 units down
      to 11 units right and 29 units down
      at 2 units per second starting at 46 seconds of elapsed time. */
+})
+
+moveAt(14, 7, 11, 29, 46, 2, () => {
+  /* The child scene graph; linearly interpolates
+     from 14 units right and 7 units down
+     to 11 units right and 29 units down
+     at 2 units per second starting at 46 seconds of elapsed time. */
+}, () => {
+  /* Callback executed on reaching the destination. */
 })
 ```
 
@@ -103,6 +121,8 @@ scaleBetween(2, 0.5, 3, 0.25, 46, 72, () => {
      from doubling in size on the X axis and halving in size on the Y axis
      to tripling in size on the X axis in dividing its size by 4 four on the Y axis
      between 46 and 72 seconds of elapsed time. */
+}, () => {
+  /* Callback executed at 72 seconds of elapsed time. */
 })
 ```
 
@@ -122,6 +142,15 @@ fadeBetween(0.25, 0.75, 46, 72, () => {
      from 25% opacity
      to 75% opacity
      between 46 and 72 seconds of elapsed time. */
+})
+
+fadeBetween(0.25, 0.75, 46, 72, () => {
+  /* The child scene graph; linearly interpolates
+     from 25% opacity
+     to 75% opacity
+     between 46 and 72 seconds of elapsed time. */
+}, () => {
+  /* Callback executed at the end of the fade. */
 })
 ```
 
