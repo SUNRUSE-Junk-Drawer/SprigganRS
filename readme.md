@@ -124,3 +124,31 @@ fadeBetween(0.25, 0.75, 46, 72, () => {
      between 46 and 72 seconds of elapsed time. */
 })
 ```
+
+### Click
+
+Executes a callback (and subsequently re-renders) on clicking on any object emitted by a child scene graph.
+
+```js
+click(() => {
+  /* Called on clicking on the below child scene graph. */
+}, () => {
+  /* The child scene graph which can be clicked on. */
+})
+```
+
+Note: if multiple calls are nested, only the inner-most handler will be used on clicking on its children:
+
+```js
+click(() => {
+  /* Called only on clicking on A or C. */
+}, () => {
+  /* A. */
+  click(() => {
+    /* Called only on clicking on B. */
+  }, () => {
+    /* B. */
+  })
+  /* C. */
+})
+```
