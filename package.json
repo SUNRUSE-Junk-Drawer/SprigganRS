@@ -1,0 +1,9 @@
+{
+  "name": "sprigganrs",
+  "version": "0.0.0",
+  "description": "A \"reactive\" event-driven web game engine",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/SUNRUSE/SprigganRS"
+  }
+}
