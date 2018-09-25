@@ -2,8 +2,22 @@
   "name": "sprigganrs",
   "version": "0.0.0",
   "description": "A \"reactive\" event-driven web game engine",
+  "scripts": {
+    "watch": "babel-node build/watch",
+    "oneOff": "babel-node build/oneOff"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/SUNRUSE/SprigganRS"
+  },
+  "dependencies": {
+    "@babel/core": "^7.0.0-beta.52",
+    "@babel/node": "^7.0.0-beta.52",
+    "@babel/preset-env": "^7.0.0-beta.52",
+    "chokidar": "^2.0.4",
+    "mkdirp": "^0.5.1",
+    "recursive-readdir": "^2.2.2",
+    "rimraf": "^2.6.2",
+    "uglify-js": "^3.4.9"
   }
 }

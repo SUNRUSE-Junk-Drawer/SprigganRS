@@ -1,10 +1,5 @@
 language: node_js
 node_js:
 - node
-jobs:
-  include:
-  - stage: dummy
-    install:
-    - echo TODO install
-    script:
-    - echo TODO test
+script:
+- npm run-script oneOff
