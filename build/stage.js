@@ -249,6 +249,17 @@ export default class Stage {
     }
   }
 
+  try(evaluate, use) {
+    let captured
+    try {
+      captured = evaluate()
+    } catch (e) {
+      this.handle(e)
+      return
+    }
+    use(captured)
+  }
+
   stop() {
     switch (this.state) {
       case `done`:
