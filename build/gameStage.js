@@ -1,11 +1,11 @@
 import WatchableStage from "./watchableStage"
 import JavaScriptParseStage from "./javaScriptParseStage"
 import JavaScriptCombineStage from "./javaScriptCombineStage"
-import WriteFileStage from "./writeFileStage"
 import DeleteDirectoryStage from "./deleteDirectoryStage"
 import CreateDirectoryStage from "./createDirectoryStage"
 import ReadJsonStage from "./readJsonStage"
 import FaviconsStage from "./faviconsStage"
+import WriteFilesStage from "./writeFilesStage"
 
 export default class GameStage extends WatchableStage {
   constructor(parent, name, dependencies, engine) {
@@ -28,8 +28,19 @@ export default class GameStage extends WatchableStage {
         )
     )
     const favicons = new FaviconsStage(this, `favicons`, [readMetadata], () => [`src`, `games`, name, `icon.svg`], () => readMetadata.json)
-    const deleteDistDirectory = new DeleteDirectoryStage(this, `deleteDistDirectory`, [combineJavaScript], () => [`dist`, name])
+    const deleteDistDirectory = new DeleteDirectoryStage(this, `deleteDistDirectory`, [combineJavaScript, favicons], () => [`dist`, name])
     const createDistDirectory = new CreateDirectoryStage(this, `createDistDirectory`, [deleteDistDirectory], () => [`dist`, name])
-    new WriteFileStage(this, `writeJavaScript`, [createDistDirectory], () => [`dist`, name, `index.js`], () => combineJavaScript.code)
+    const writeFiles = new WriteFilesStage(
+      this,
+      `write`,
+      [createDistDirectory],
+      () => [{
+        name: `index.js`,
+        contents: combineJavaScript.code
+      }]
+        .concat(favicons.response.files)
+        .concat(favicons.response.images),
+      () => [`dist`, name]
+    )
   }
 }
