@@ -9,7 +9,7 @@ export default class FileSearchStage extends InstancedStage {
     this.extension = extension
   }
 
-  getInstanceNames() {
-    recursiveReaddir(path.join.apply(path, this.searchPathFactory()), (error, files) => this.handle(error, () => this.gotInstanceNames(files.filter(file => file.endsWith(`.${this.extension}`)))))
+  getInstances() {
+    recursiveReaddir(path.join.apply(path, this.searchPathFactory()), (error, files) => this.handle(error, () => this.gotInstances(files.filter(file => file.endsWith(`.${this.extension}`)))))
   }
 }

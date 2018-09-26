@@ -8,7 +8,7 @@ export default class FileListStage extends InstancedStage {
     this.searchPathFactory = searchPathFactory
   }
 
-  getInstanceNames() {
-    fs.readdir(path.join.apply(path, this.searchPathFactory()), (error, files) => this.handle(error, () => this.gotInstanceNames(files)))
+  getInstances() {
+    fs.readdir(path.join.apply(path, this.searchPathFactory()), (error, files) => this.handle(error, () => this.gotInstances(files)))
   }
 }

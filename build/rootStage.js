@@ -16,7 +16,7 @@ export default class RootStage extends WatchableStage {
       this,
       `games`,
       [],
-      instanceName => new GameStage(games, instanceName, [], engine),
+      instance => new GameStage(games, instance, [], engine),
       () => [`src`, `games`]
     )
     this.watchInstanced(() => [`src`, `games`], games, null, 0)

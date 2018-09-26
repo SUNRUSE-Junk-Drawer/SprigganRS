@@ -10,7 +10,7 @@ export default class InstancedStage extends GroupStage {
   blocksChildren() {
     switch (this.subState) {
       case `notRunning`:
-      case `gettingInstanceNames`:
+      case `gettingInstances`:
         return true
 
       case `waitingForChildren`:
@@ -30,12 +30,12 @@ export default class InstancedStage extends GroupStage {
   }
 
   performStart() {
-    this.subState = `gettingInstanceNames`
-    this.getInstanceNames()
+    this.subState = `gettingInstances`
+    this.getInstances()
   }
 
-  getInstanceNames() {
-    this.criticalStop(`"getInstanceNames" is not implemented`)
+  getInstances() {
+    this.criticalStop(`"getInstances" is not implemented`)
   }
 
   checkState() {
@@ -45,7 +45,7 @@ export default class InstancedStage extends GroupStage {
         super.checkState()
         break
 
-      case `gettingInstanceNames`:
+      case `gettingInstances`:
         break
 
       default:
@@ -53,19 +53,19 @@ export default class InstancedStage extends GroupStage {
     }
   }
 
-  gotInstanceNames(instanceNames) {
-    if (this.subState != `gettingInstanceNames`) {
-      this.criticalStop(`Sub-state "${this.subState}" is not implemented by "gotInstanceNames".`)
+  gotInstances(instances) {
+    if (this.subState != `gettingInstances`) {
+      this.criticalStop(`Sub-state "${this.subState}" is not implemented by "gotInstances".`)
     }
 
     this.subState = `waitingForChildren`
 
     this.children
-      .forEach(child => instanceNames.indexOf(child.name) == -1 && child.stop())
+      .forEach(child => instances.indexOf(child.name) == -1 && child.stop())
 
     // This removes duplicates.
-    instanceNames
-      .forEach(instanceName => this.get([instanceName]) || this.instanceFactory(instanceName))
+    instances
+      .forEach(instance => this.get([instance]) || this.instanceFactory(instance))
 
     super.performStart()
   }

@@ -43,7 +43,7 @@ class InstanceStage extends GroupStage {
 
 export default class JavaScriptParseStage extends FileSearchStage {
   constructor(parent, name, dependencies, searchPathFactory) {
-    super(parent, name, dependencies, instanceName => new InstanceStage(this, instanceName, []), searchPathFactory, `js`)
+    super(parent, name, dependencies, instance => new InstanceStage(this, instance, []), searchPathFactory, `js`)
     this.parsed = {}
   }
 }
