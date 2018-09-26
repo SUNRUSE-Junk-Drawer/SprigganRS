@@ -23,9 +23,9 @@ This is then converted into a **scene graph** by a function called a **view** wh
 '-------------------' |░░░░░░░░░░░░░░░░|
                       '----------------'
 ```
-A 16:9 "safe zone" (shown unshaded) is centered in the page and scaled to be as large as possible while keeping within its boundaries.  The remaining space (shown shaded) is not cropped or trimmed; in wider viewers, additional background may be visible to the left and right of the "safe zone", while in taller viewers, it may be visible above and below.
+A "safe zone" (shown unshaded) is centered in the page and scaled to be as large as possible while keeping within its boundaries.  The remaining space (shown shaded) is not cropped or trimmed; in wider viewers, additional background may be visible to the left and right of the "safe zone", while in taller viewers, it may be visible above and below.
 
-The coordinate space is 320 "units" wide (X) and 180 "units" tall (Y), where 0, 0 is the top left corner.
+The coordinate space is a number of "units" wide (X) and tall (Y) (defined in the game's "metadata.json"), where 0, 0 is the top left corner.
 
 ## Game script
 
@@ -59,7 +59,7 @@ Initially an empty anonymous object.
 Contains the borders of the page, in scene graph coordinates.
 
 ```js
-/* Assuming that the page is wider than 16:9. */
+/* Assuming that the page is wider than the configured 320x180 "safe zone". */
 console.log(borders.left)   /* -4.78 */
 console.log(borders.right)  /* 324.78 */
 console.log(borders.top)    /* 0 */
@@ -260,3 +260,108 @@ Unpauses the game timer.  Has no effect if not paused.
 ```js
 resume()
 ```
+
+## Project Structure
+
+```
+|'- dist
+|   |'- (game name).zip
+|    '- (game name)
+|       |'- index.html
+|        '- index.js
+ '- src
+    |'- engine
+    |   '- (**/*.js)
+     '- (game name)
+        |'- metadata.json
+        |'- icon.svg
+        |'- (**/*.js)
+         '- (**/*.svg)
+```
+
+### dist/(game name).zip
+
+A zip file containing every part of the corresponding game, minfied, but not
+including debugging tools.  Only produced by "one-off" builds.
+
+### dist/(game name)
+
+A directory containing every part of the corresponding game, including debugging
+tools, without much in the way of minification.  Only produced by "watch"
+builds.
+
+### src/engine/**/*.js
+
+All JavaScript in the "src/engine" directory (and its subdirectories) is
+included in every game.  This is the runtime engine.  It is responsible for:
+
+- Error handling.
+- Timing.
+- DOM manipulation.
+- Input.
+- Save/load.
+- Debugging tools.
+- State management.
+
+### src/games/(game name)/metadata.json
+
+A JSON file describing that particular game.
+
+```json
+{
+  "name": "Game Name",
+  "description": "Game Description",
+  "developer": {
+    "name": "Developer Name",
+    "url": "https://example.com"
+  },
+  "width": 320,
+  "height": 180
+}
+```
+
+#### name
+
+Shown as the page title, and when "pinned" to the home screen of a mobile
+device.
+
+#### description
+
+A short description of the game, included in metadata.
+
+#### developer.name
+
+The name of the developer of the game, included in metadata.
+
+#### developer.url
+
+The URL of the developer of the game, included in metadata.
+
+#### width
+
+The number of units the "safe zone" is "wide" (see Coordinate Space).
+
+#### width
+
+The number of units the "safe zone" is "tall" (see Coordinate Space).
+
+### src/games/(game name)/icon.svg
+
+An icon to use; shown as a favicon, splash screen and when "pinned" to the home
+screen of a mobile devce.  Expected to be square.
+
+### src/games/(game name)/**/*.js
+
+Included as game code.  The order in which it is included is non-deterministic.
+
+### src/games/(game name)/**/*.svg
+
+Included in the game; declarations are added to the JavaScript global namespace.
+However, the name requires some manipulation to fit into a JavaScript variable
+name.
+
+For example:
+`src/games/Example Game/Example Dir A/Example Dir B/Example Dir C/Example File.svg`
+
+Becomes:
+`exampleDirAExampleDirBExampleDirCExampleFileSvg`
