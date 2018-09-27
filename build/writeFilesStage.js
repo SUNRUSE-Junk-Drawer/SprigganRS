@@ -7,6 +7,10 @@ export default class WriteFilesStage extends InstancedStage {
     this.filesFactory = filesFactory
   }
 
+  getInstanceKey(instance) {
+    return instance.name
+  }
+
   getInstances() {
     this.gotInstances(this.filesFactory())
   }
