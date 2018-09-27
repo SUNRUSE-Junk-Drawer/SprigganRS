@@ -67,9 +67,11 @@ export default class InstancedStage extends GroupStage {
 
     if (this.cacheInstances) {
       this.children
+        .slice()
         .forEach(child => instances.map(instance => this.getInstanceKey(instance)).indexOf(child.name) == -1 && child.stop())
     } else {
       this.children
+        .slice()
         .forEach(child => child.stop())
     }
 
