@@ -3,8 +3,8 @@ import * as path from "path"
 import InstancedStage from "./instancedStage"
 
 export default class FileListStage extends InstancedStage {
-  constructor(parent, name, dependencies, instanceFactory, searchPathFactory) {
-    super(parent, name, dependencies, instanceFactory)
+  constructor(parent, name, dependencies, cacheInstances, instanceFactory, searchPathFactory) {
+    super(parent, name, dependencies, cacheInstances, instanceFactory)
     this.searchPathFactory = searchPathFactory
   }
 

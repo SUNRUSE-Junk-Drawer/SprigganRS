@@ -3,8 +3,8 @@ import recursiveReaddir from "recursive-readdir"
 import InstancedStage from "./instancedStage"
 
 export default class FileSearchStage extends InstancedStage {
-  constructor(parent, name, dependencies, instanceFactory, searchPathFactory, extension) {
-    super(parent, name, dependencies, instanceFactory)
+  constructor(parent, name, dependencies, cacheInstances, instanceFactory, searchPathFactory, extension) {
+    super(parent, name, dependencies, cacheInstances, instanceFactory)
     this.searchPathFactory = searchPathFactory
     this.extension = extension
   }

@@ -1,9 +1,10 @@
 import GroupStage from "./groupStage"
 
 export default class InstancedStage extends GroupStage {
-  constructor(parent, name, dependencies, instanceFactory) {
+  constructor(parent, name, dependencies, cacheInstances, instanceFactory) {
     super(parent, name, dependencies)
     this.subState = `notRunning`
+    this.cacheInstances = cacheInstances
     this.instanceFactory = instanceFactory
   }
 
@@ -64,8 +65,13 @@ export default class InstancedStage extends GroupStage {
 
     this.subState = `waitingForChildren`
 
-    this.children
-      .forEach(child => instances.map(instance => this.getInstanceKey(instance)).indexOf(child.name) == -1 && child.stop())
+    if (this.cacheInstances) {
+      this.children
+        .forEach(child => instances.map(instance => this.getInstanceKey(instance)).indexOf(child.name) == -1 && child.stop())
+    } else {
+      this.children
+        .forEach(child => child.stop())
+    }
 
     // This removes duplicates.
     instances
