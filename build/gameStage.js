@@ -6,6 +6,7 @@ import CreateDirectoryStage from "./createDirectoryStage"
 import ReadJsonStage from "./readJsonStage"
 import FaviconsStage from "./faviconsStage"
 import WriteFilesStage from "./writeFilesStage"
+import CompressPngsStage from "./compressPngsStage"
 
 export default class GameStage extends WatchableStage {
   constructor(parent, name, dependencies, engine) {
@@ -31,10 +32,17 @@ export default class GameStage extends WatchableStage {
     this.watch(() => [`src`, `games`, name, `icon.svg`], favicons, null)
     const deleteDistDirectory = new DeleteDirectoryStage(this, `deleteDistDirectory`, [combineJavaScript, favicons], () => [`dist`, name])
     const createDistDirectory = new CreateDirectoryStage(this, `createDistDirectory`, [deleteDistDirectory], () => [`dist`, name])
+    const compressPngs = new CompressPngsStage(
+      this,
+      `compressPngs`,
+      [favicons],
+      false,
+      () => favicons.response.images
+    )
     const writeFiles = new WriteFilesStage(
       this,
       `write`,
-      [createDistDirectory],
+      [createDistDirectory, compressPngs],
       false,
       () => [{
         name: `index.js`,
