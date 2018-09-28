@@ -11,9 +11,10 @@ export default class FaviconsStage extends Stage {
 
   performStart() {
     const metadata = this.metadataFactory()
+    const prefix = this.oneOff() ? `` : `DEVELOPMENT BUILD - `
     favicons(path.join.apply(path, this.logoPathSegmentFactory()), {
-      appName: metadata.name,
-      appDescription: metadata.description,
+      appName: `${prefix}${metadata.name}`,
+      appDescription: `${prefix}${metadata.description}`,
       developerName: metadata.developer.name,
       developerURL: metadata.developer.url,
       background: `#000`,

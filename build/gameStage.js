@@ -48,7 +48,7 @@ export default class GameStage extends WatchableStage {
       <html>
         <head>
           <meta charset="UTF-8">
-          <title>${readMetadata.json.name}</title>
+          <title>${this.oneOff() ? `` : `DEVELOPMENT BUILD - `}${readMetadata.json.name}</title>
           <meta name="viewport" content="initial-scale=1, minimum-scale=1, maximum-scale=1, width=device-width, height=device-height, user-scalable=no">
           ${favicons.response.html.join(``)}
         </head>
