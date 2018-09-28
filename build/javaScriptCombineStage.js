@@ -75,6 +75,7 @@ export default class JavaScriptCombineStage extends Stage {
       },
       toplevel: true,
       output: {
+        beautify: !this.oneOff(),
         ast: false,
         code: true
       }
