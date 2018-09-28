@@ -22,10 +22,12 @@ export default class JavaScriptCombineStage extends Stage {
       })
 
     const minified = uglifyJs.minify(combined, {
-      mangle: {
-        toplevel: true,
-        properties: true
-      },
+      mangle: this.oneOff()
+        ? {
+          toplevel: true,
+          properties: true
+        }
+        : false,
       toplevel: true,
       output: {
         ast: false,

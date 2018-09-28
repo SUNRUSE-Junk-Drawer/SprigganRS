@@ -40,7 +40,11 @@ export default class CompressPngsStage extends InstancedStage {
   }
 
   getInstances() {
-    this.files = this.filesFactory()
-    this.gotInstances(this.files)
+    if (this.oneOff()) {
+      this.files = this.filesFactory()
+      this.gotInstances(this.files)
+    } else {
+      this.gotInstances([])
+    }
   }
 }
