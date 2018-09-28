@@ -7,6 +7,7 @@ import ReadJsonStage from "./readJsonStage"
 import FaviconsStage from "./faviconsStage"
 import WriteFilesStage from "./writeFilesStage"
 import CompressPngsStage from "./compressPngsStage"
+import MinifyHtmlStage from "./minifyHtmlStage"
 
 export default class GameStage extends WatchableStage {
   constructor(parent, name, dependencies, engine) {
@@ -39,14 +40,33 @@ export default class GameStage extends WatchableStage {
       false,
       () => favicons.response.images
     )
+    const minifyHtml = new MinifyHtmlStage(
+      this,
+      `minifyHtml`,
+      [favicons],
+      () => `<!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="UTF-8">
+          <title>${readMetadata.json.name}</title>
+          <meta name="viewport" content="initial-scale=1, minimum-scale=1, maximum-scale=1, width=device-width, height=device-height, user-scalable=no">
+          ${favicons.response.html.join(``)}
+        </head>
+        <body style="background: black">
+        </body>
+      </html>`
+    )
     const writeFiles = new WriteFilesStage(
       this,
       `write`,
-      [createDistDirectory, compressPngs],
+      [createDistDirectory, compressPngs, minifyHtml],
       false,
       () => [{
         name: `index.js`,
         contents: combineJavaScript.code
+      }, {
+        name: `index.html`,
+        contents: minifyHtml.minified
       }]
         .concat(favicons.response.files)
         .concat(favicons.response.images),
