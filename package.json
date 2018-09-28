@@ -14,6 +14,7 @@
     "@babel/core": "^7.0.0-beta.52",
     "@babel/node": "^7.0.0-beta.52",
     "@babel/preset-env": "^7.0.0-beta.52",
+    "archiver": "^3.0.0",
     "chokidar": "^2.0.4",
     "exec-buffer": "^3.2.0",
     "favicons": "^5.2.0",

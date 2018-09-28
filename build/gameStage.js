@@ -8,6 +8,7 @@ import FaviconsStage from "./faviconsStage"
 import WriteFilesStage from "./writeFilesStage"
 import CompressPngsStage from "./compressPngsStage"
 import MinifyHtmlStage from "./minifyHtmlStage"
+import ZipFilesStage from "./zipFilesStage"
 
 export default class GameStage extends WatchableStage {
   constructor(parent, name, dependencies, engine) {
@@ -31,8 +32,6 @@ export default class GameStage extends WatchableStage {
     )
     const favicons = new FaviconsStage(this, `favicons`, [readMetadata], () => [`src`, `games`, name, `icon.svg`], () => readMetadata.json)
     this.watch(() => [`src`, `games`, name, `icon.svg`], favicons, null)
-    const deleteDistDirectory = new DeleteDirectoryStage(this, `deleteDistDirectory`, [combineJavaScript, favicons], () => [`dist`, name])
-    const createDistDirectory = new CreateDirectoryStage(this, `createDistDirectory`, [deleteDistDirectory], () => [`dist`, name])
     const compressPngs = new CompressPngsStage(
       this,
       `compressPngs`,
@@ -56,21 +55,34 @@ export default class GameStage extends WatchableStage {
         </body>
       </html>`
     )
-    const writeFiles = new WriteFilesStage(
-      this,
-      `write`,
-      [createDistDirectory, compressPngs, minifyHtml],
-      false,
-      () => [{
-        name: `index.js`,
-        contents: combineJavaScript.code
-      }, {
-        name: `index.html`,
-        contents: minifyHtml.minified
-      }]
-        .concat(favicons.response.files)
-        .concat(favicons.response.images),
-      () => [`dist`, name]
-    )
+    const filesFactory = () => [{
+      name: `index.js`,
+      contents: combineJavaScript.code
+    }, {
+      name: `index.html`,
+      contents: minifyHtml.minified
+    }]
+      .concat(favicons.response.files)
+      .concat(favicons.response.images)
+    if (this.oneOff()) {
+      new ZipFilesStage(
+        this,
+        `write`,
+        [compressPngs, minifyHtml],
+        () => [`dist`, `${name}.zip`],
+        filesFactory
+      )
+    } else {
+      const deleteDistDirectory = new DeleteDirectoryStage(this, `deleteDistDirectory`, [combineJavaScript, favicons], () => [`dist`, name])
+      const createDistDirectory = new CreateDirectoryStage(this, `createDistDirectory`, [deleteDistDirectory], () => [`dist`, name])
+      new WriteFilesStage(
+        this,
+        `write`,
+        [createDistDirectory, compressPngs, minifyHtml],
+        false,
+        filesFactory,
+        () => [`dist`, name]
+      )
+    }
   }
 }
