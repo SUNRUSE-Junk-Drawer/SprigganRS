@@ -270,6 +270,8 @@ resume()
 |       |'- index.html
 |        '- index.js
  '- src
+    |'- bootloader
+    |   '- (**/*.js)
     |'- engine
     |   '- (**/*.js)
      '- (game name)
@@ -290,12 +292,17 @@ A directory containing every part of the corresponding game, including debugging
 tools, without much in the way of minification.  Only produced by "watch"
 builds.
 
+### src/bootloader/**/*.js
+
+All JavaScript in the "src/bootloader" directory (and its subdirectories) is
+loaded at startup, and is responsible for handling errors and loading all other
+content.
+
 ### src/engine/**/*.js
 
 All JavaScript in the "src/engine" directory (and its subdirectories) is
 included in every game.  This is the runtime engine.  It is responsible for:
 
-- Error handling.
 - Timing.
 - DOM manipulation.
 - Input.

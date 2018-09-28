@@ -11,7 +11,7 @@ import MinifyHtmlStage from "./minifyHtmlStage"
 import ZipFilesStage from "./zipFilesStage"
 
 export default class GameStage extends WatchableStage {
-  constructor(parent, name, dependencies, engine) {
+  constructor(parent, name, dependencies, engine, combineBootloader) {
     super(parent, name, dependencies)
     const readMetadata = new ReadJsonStage(this, `readMetadata`, [], () => [`src`, `games`, name, `metadata.json`])
     this.watch(() => [`src`, `games`, name, `metadata.json`], readMetadata, null)
@@ -52,12 +52,16 @@ export default class GameStage extends WatchableStage {
           ${favicons.response.html.join(``)}
         </head>
         <body style="background: black">
+          <script src="bootloader.js"></script>
         </body>
       </html>`
     )
     const filesFactory = () => [{
       name: `index.js`,
       contents: combineJavaScript.code
+    }, {
+      name: `bootloader.js`,
+      contents: combineBootloader.code
     }, {
       name: `index.html`,
       contents: minifyHtml.minified
@@ -68,7 +72,7 @@ export default class GameStage extends WatchableStage {
       new ZipFilesStage(
         this,
         `write`,
-        [compressPngs, minifyHtml],
+        [combineBootloader, compressPngs, minifyHtml],
         () => [`dist`, `${name}.zip`],
         filesFactory
       )
@@ -78,7 +82,7 @@ export default class GameStage extends WatchableStage {
       new WriteFilesStage(
         this,
         `write`,
-        [createDistDirectory, compressPngs, minifyHtml],
+        [combineBootloader, createDistDirectory, compressPngs, minifyHtml],
         false,
         filesFactory,
         () => [`dist`, name]
