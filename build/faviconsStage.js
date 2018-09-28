@@ -28,14 +28,14 @@ export default class FaviconsStage extends Stage {
       online: false,
       preferOnline: false,
       icons: {
-        android: true,
-        appleIcon: true,
-        appleStartup: true,
-        coast: true,
+        android: this.oneOff(),
+        appleIcon: this.oneOff(),
+        appleStartup: this.oneOff(),
+        coast: this.oneOff(),
         favicons: true,
-        firefox: true,
-        windows: true,
-        yandex: true
+        firefox: this.oneOff(),
+        windows: this.oneOff(),
+        yandex: this.oneOff()
       }
     }, (error, response) => this.handle(error, () => {
       this.response = response
