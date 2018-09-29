@@ -32,11 +32,11 @@ The coordinate space is a number of "units" wide (X) and tall (Y) (defined in th
 A game script is structured as follows:
 
 ```js
-const game = () => {
+function game() {
   /* View. */
 }
 
-const ui = () => {
+function ui() {
   /* View. */
 }
 ```
@@ -101,39 +101,39 @@ Note: it is important these be used over any external timers as they are monoton
 Translates a child by a given number of units.
 
 ```js
-move(14, 7, () => {
+move(14, 7, function () {
   /* The child scene graph to move 14 units right and 7 units down. */
 })
 
-moveBetween(14, 7, 11, 29, 46, 72, () => {
+moveBetween(14, 7, 11, 29, 46, 72, function () {
   /* The child scene graph; linearly interpolates
      from 14 units right and 7 units down
      to 11 units right and 29 units down
      between 46 and 72 seconds of elapsed time. */
 })
 
-moveBetween(14, 7, 11, 29, 46, 72, () => {
+moveBetween(14, 7, 11, 29, 46, 72, function () {
   /* The child scene graph; linearly interpolates
      from 14 units right and 7 units down
      to 11 units right and 29 units down
      between 46 and 72 seconds of elapsed time. */
-}, () => {
-  /* Callback executed at 72 seconds of elapsed time. */
+}, function () {
+/* Callback executed at 72 seconds of elapsed time. */
 })
 
-moveAt(14, 7, 11, 29, 46, 2, () => {
+moveAt(14, 7, 11, 29, 46, 2, function () {
   /* The child scene graph; linearly interpolates
      from 14 units right and 7 units down
      to 11 units right and 29 units down
      at 2 units per second starting at 46 seconds of elapsed time. */
 })
 
-moveAt(14, 7, 11, 29, 46, 2, () => {
+moveAt(14, 7, 11, 29, 46, 2, function () {
   /* The child scene graph; linearly interpolates
      from 14 units right and 7 units down
      to 11 units right and 29 units down
      at 2 units per second starting at 46 seconds of elapsed time. */
-}, () => {
+}, function () {
   /* Callback executed on reaching the destination. */
 })
 ```
@@ -141,9 +141,11 @@ moveAt(14, 7, 11, 29, 46, 2, () => {
 Note: if wrapped in a scaling function, the move itself will be scaled:
 
 ```js
-scale(0.5, () => move(14, 6, () => {
-  /* Actually moves 7, 3 units. */
-}))
+scale(0.5, function() {
+  move(14, 6, function () {
+    /* Actually moves 7, 3 units. */
+  })
+})
 ```
 
 ### Scale
@@ -151,16 +153,16 @@ scale(0.5, () => move(14, 6, () => {
 Multiplies the size of a child scene graph by a given factor.
 
 ```js
-scale(2, 0.5, () => {
+scale(2, 0.5, function () {
   /* The child scene graph to double in size on the X axis and halve in size on the Y axis. */
 })
 
-scaleBetween(2, 0.5, 3, 0.25, 46, 72, () => {
+scaleBetween(2, 0.5, 3, 0.25, 46, 72, function () {
   /* The child scene graph; linearly interpolates
      from doubling in size on the X axis and halving in size on the Y axis
      to tripling in size on the X axis in dividing its size by 4 four on the Y axis
      between 46 and 72 seconds of elapsed time. */
-}, () => {
+}, function () {
   /* Callback executed at 72 seconds of elapsed time. */
 })
 ```
@@ -172,23 +174,23 @@ Clamped to 0 and 1 at the time of emitting objects.
 This additionally adjusts the volume of sounds.
 
 ```js
-fade(0.5, () => {
+fade(0.5, function () {
   /* The child scene graph to make semi-transparent. */
 })
 
-fadeBetween(0.25, 0.75, 46, 72, () => {
+fadeBetween(0.25, 0.75, 46, 72, function () {
   /* The child scene graph; linearly interpolates
      from 25% opacity
      to 75% opacity
      between 46 and 72 seconds of elapsed time. */
 })
 
-fadeBetween(0.25, 0.75, 46, 72, () => {
+fadeBetween(0.25, 0.75, 46, 72, function () {
   /* The child scene graph; linearly interpolates
      from 25% opacity
      to 75% opacity
      between 46 and 72 seconds of elapsed time. */
-}, () => {
+}, function () {
   /* Callback executed at the end of the fade. */
 })
 ```
@@ -198,9 +200,9 @@ fadeBetween(0.25, 0.75, 46, 72, () => {
 Executes a callback (and subsequently re-renders) on clicking on any object emitted by a child scene graph.
 
 ```js
-click(() => {
+click(function () {
   /* Called on clicking on the below child scene graph. */
-}, () => {
+}, function () {
   /* The child scene graph which can be clicked on. */
 })
 ```
@@ -208,13 +210,13 @@ click(() => {
 Note: if multiple calls are nested, only the inner-most handler will be used on clicking on its children:
 
 ```js
-click(() => {
+click(function () {
   /* Called only on clicking on A or C. */
-}, () => {
+}, function () {
   /* A. */
-  click(() => {
+  click(function () {
     /* Called only on clicking on B. */
-  }, () => {
+  }, function () {
     /* B. */
   })
   /* C. */
@@ -226,7 +228,7 @@ click(() => {
 Executes a callback (and subsequently re-renders) at a specified time.
 
 ```js
-at(46, () => {
+at(46, function () {
   /* Called at 46 seconds of elapsed time. */
 })
 ```
@@ -236,13 +238,13 @@ at(46, () => {
 Caches a complex child scene graph, meaning it is only generated once.
 
 ```js
-batch(`Object Name`, `Cache Key`, () => { /* Scene graph to draw. */ })
+batch("Object Name", "Cache Key", function () { /* Scene graph to draw. */ })
 ```
 
 Note: the cache will be dropped if it is not used during a scene.  Call keepBatch to keep it cached without actually drawing it.
 
 ```js
-keepBatch(`Cache Key`, () => { /* Scene graph to cache, but not draw. */ })
+keepBatch("Cache Key", function () { /* Scene graph to cache, but not draw. */ })
 ```
 
 ### Pause
