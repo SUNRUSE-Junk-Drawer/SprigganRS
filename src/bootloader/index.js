@@ -54,7 +54,7 @@ onload = function () {
     var request = new XMLHttpRequest()
     request.open("GET", url, true)
     request.responseType = responseType
-    request.onload = function () {
+    request.onreadystatechange = function () {
       if (errorEncountered) {
         return
       }
