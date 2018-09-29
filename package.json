@@ -11,21 +11,21 @@
     "url": "https://github.com/SUNRUSE/SprigganRS"
   },
   "dependencies": {
-    "@babel/core": "^7.0.0-beta.52",
-    "@babel/node": "^7.0.0-beta.52",
-    "@babel/preset-env": "^7.0.0-beta.52",
-    "archiver": "^3.0.0",
-    "chokidar": "^2.0.4",
-    "exec-buffer": "^3.2.0",
-    "express": "^4.16.3",
-    "favicons": "^5.2.0",
-    "html-minifier": "^3.5.20",
-    "is-png": "^1.1.0",
-    "mkdirp": "^0.5.1",
-    "pngcrush-bin": "^3.1.1",
-    "recursive-readdir": "^2.2.2",
-    "rimraf": "^2.6.2",
-    "svgo": "^1.1.1",
-    "uglify-js": "^3.4.9"
+    "@babel/core": "7.1.0",
+    "@babel/node": "7.0.0",
+    "@babel/preset-env": "7.1.0",
+    "archiver": "3.0.0",
+    "chokidar": "2.0.4",
+    "exec-buffer": "3.2.0",
+    "express": "4.16.3",
+    "favicons": "5.2.0",
+    "html-minifier": "3.5.20",
+    "is-png": "1.1.0",
+    "mkdirp": "0.5.1",
+    "pngcrush-bin": "3.1.1",
+    "recursive-readdir": "2.2.2",
+    "rimraf": "2.6.2",
+    "svgo": "1.1.1",
+    "uglify-js": "3.4.9"
   }
 }
