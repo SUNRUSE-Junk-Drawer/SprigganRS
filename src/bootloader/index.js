@@ -47,7 +47,7 @@ onload = function () {
   }
 
   var script
-  LoadFile("index.js", "text", function (file) { script = file })
+  LoadFile("index.js", "text", function (request) { script = request.responseText })
 
   function LoadFile(url, responseType, then) {
     totalFiles++
@@ -67,7 +67,7 @@ onload = function () {
         throw new Error("Unexpected HTTP status " + request.status + " while loading " + JSON.stringify(url))
       }
 
-      then(request.response)
+      then(request)
 
       loadedFiles++
 
