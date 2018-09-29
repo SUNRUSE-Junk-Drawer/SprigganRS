@@ -372,3 +372,27 @@ For example:
 
 Becomes:
 `exampleDirAExampleDirBExampleDirCExampleFileSvg`
+
+## Building
+
+The final build product is a set of files which can be hosted on a HTTP/S server
+to play the game.
+
+"Watch" builds will automatically host such a server on HTTP port 5000.
+Navigate to http://localhost:5000/game-name to test your game.
+
+Fork this repository to develop your own games.
+
+### Visual Studio Code
+
+Build tasks exist for many common tasks.  Generally, you would want to run
+"Install dependencies", then "Watch for changes" for local development tasks.
+
+### Travis CI
+
+The default Travis CI configuration will build all games and publish them as
+separate zip files as GitHub release assets.  However, the "deploy" section of
+the .travis.yml file will need to be regenerated as the access token will not
+be applicable to your fork's GitHub repository or Travis CI instance; see the
+[Travis CI documentation](https://docs.travis-ci.com/user/deployment/releases/)
+for details on how to do this.
