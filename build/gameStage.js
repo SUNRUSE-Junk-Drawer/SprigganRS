@@ -9,6 +9,7 @@ import WriteFilesStage from "./writeFilesStage"
 import CompressPngsStage from "./compressPngsStage"
 import MinifyHtmlStage from "./minifyHtmlStage"
 import ZipFilesStage from "./zipFilesStage"
+import SvgParseStage from "./svgParseStage"
 
 export default class GameStage extends WatchableStage {
   constructor(parent, name, dependencies, engine, combineBootloader) {
@@ -17,13 +18,20 @@ export default class GameStage extends WatchableStage {
     this.watch(() => [`src`, `games`, name, `metadata.json`], readMetadata, null)
     const parseJavaScript = new JavaScriptParseStage(this, `parseJavaScript`, [], true, () => [`src`, `games`, name])
     this.watchInstanced(() => [`src`, `games`, name], parseJavaScript, `read`, null)
+    const parseSvg = new SvgParseStage(this, `parseSvg`, [], true, () => [`src`, `games`, name])
+    this.watchInstanced(() => [`src`, `games`, name], parseSvg, `read`, null)
     const combineJavaScript = new JavaScriptCombineStage(
       this,
       `combineJavaScript`,
-      [engine, parseJavaScript],
+      [engine, parseJavaScript, parseSvg],
       () => Object
         .keys(engine.parsed)
         .map(key => engine.parsed[key])
+        .concat(
+          Object
+            .keys(parseSvg.parsed)
+            .map(key => parseSvg.parsed[key])
+        )
         .concat(
           Object
             .keys(parseJavaScript.parsed)
