@@ -1,0 +1,10 @@
+{
+  "name": "SprigganRS Example",
+  "description": "An example game created with SprigganRS",
+  "developer": {
+    "name": "SUNRUSE",
+    "url": "https://sunruse.co.uk"
+  },
+  "width": 428,
+  "height": 240
+}

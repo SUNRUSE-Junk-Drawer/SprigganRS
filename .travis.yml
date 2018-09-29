@@ -1,10 +1,15 @@
 language: node_js
 node_js:
 - node
-jobs:
-  include:
-  - stage: dummy
-    install:
-    - echo TODO install
-    script:
-    - echo TODO test
+script:
+- npm run-script oneOff
+deploy:
+  provider: releases
+  api_key:
+    secure: 5QsD5Pbkc8RWBs4oBUvFojItKeFFfdU2J0tQGstiGI4PCWrPVbTyCEijf8oBtUKKxaLoaZF3IYwgVK5gpN5aw4tS5hA4X/iNp7A1nNC8F/muoozTc8ZBnClu1QO/3rF6dc7esU5e6aJivgxpCBmKcqxab0ix+j/Lng9BSz+j6AJxvUNwnxDqrjIAHzA1TuRb93GKXTSxUY1sYiULdoedCpZ5CL0NRtvK343daF9UBGioNxeazm7OanwyogJgd8Z81ouE8YueuZ7xj+51znEQTikEES1buL5sYMlPT9I2GAweNYiHKq+dJTjIhlcyxt2BMlv4br8ubTJZzfGOZiZFJtXwOB5ZqiF4HZXtkql2qptX6w172enLNaSOaJd47lpFq2zFZ0rnhqfqDsxObAtjAZp/hPEAlSPeWuroZQyu5sTz52geGSa94xt2EwtbGY/T7pCtu1AUU+5aLjPRnqPzv91Nj8DtUneucwiEuuvp4UwZtiIZwBwq5Dat0IEQegjAzXG3+iUfay6t5eMGwDxHSndynRIVn3o7Nwtd2A5/AsGFpdct00JKh0eUOmX2oNC1Titb3eW9pgkoQ3MEFbufvrMZY6wMrEIcLPtkmPX42zTRS3dp7TzRVPhRMxD8fWDY5wOUL3MS2YimISx/upWYqFTk6kwNOqpX3VwsF/Kl9O0=
+  file_glob: true
+  file: dist/*.zip
+  skip_cleanup: true
+  on:
+    branch: master
+    repo: SUNRUSE/SprigganRS

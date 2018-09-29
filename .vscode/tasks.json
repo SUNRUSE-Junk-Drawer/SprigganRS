@@ -1,0 +1,26 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Install dependencies",
+      "type": "shell",
+      "command": "npm install",
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "Watch for changes",
+      "type": "shell",
+      "command": "npm run-script watch",
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "One-off build",
+      "type": "shell",
+      "command": "npm run-script oneOff",
+      "group": "build",
+      "problemMatcher": []
+    }
+  ]
+}
