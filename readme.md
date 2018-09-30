@@ -82,6 +82,7 @@ Note: it is important these be used over any external timers as they are monoton
 
 | Name         | Initialization | Views | Callbacks |
 |--------------|----------------|-------|-----------|
+| sprite       | No             | Yes   | No        |
 | move         | No             | Yes   | No        |
 | moveBetween  | No             | Yes   | No        |
 | moveAt       | No             | Yes   | No        |
@@ -95,6 +96,14 @@ Note: it is important these be used over any external timers as they are monoton
 | keepBatch    | No             | Yes   | No        |
 | pause        | Yes            | No    | Yes       |
 | resume       | Yes            | No    | Yes       |
+
+### Sprite
+
+Draws a specified SVG.
+
+```js
+sprite("Object Name", stringContainingSvgWhichWasLikelyImported)
+```
 
 ### Move
 
