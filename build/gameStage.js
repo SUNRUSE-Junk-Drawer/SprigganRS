@@ -3,7 +3,7 @@ import JavaScriptParseStage from "./javaScriptParseStage"
 import JavaScriptCombineStage from "./javaScriptCombineStage"
 import DeleteDirectoryStage from "./deleteDirectoryStage"
 import CreateDirectoryStage from "./createDirectoryStage"
-import ReadJsonStage from "./readJsonStage"
+import ReadMetadataStage from "./readMetadataStage"
 import FaviconsStage from "./faviconsStage"
 import WriteFilesStage from "./writeFilesStage"
 import CompressPngsStage from "./compressPngsStage"
@@ -14,7 +14,7 @@ import SvgParseStage from "./svgParseStage"
 export default class GameStage extends WatchableStage {
   constructor(parent, name, dependencies, engine, combineBootloader) {
     super(parent, name, dependencies)
-    const readMetadata = new ReadJsonStage(this, `readMetadata`, [], () => [`src`, `games`, name, `metadata.json`])
+    const readMetadata = new ReadMetadataStage(this, `readMetadata`, [], () => [`src`, `games`, name, `metadata.json`])
     this.watch(() => [`src`, `games`, name, `metadata.json`], readMetadata, null)
     const parseJavaScript = new JavaScriptParseStage(this, `parseJavaScript`, [], true, () => [`src`, `games`, name])
     this.watchInstanced(() => [`src`, `games`, name], parseJavaScript, `read`, null)
@@ -23,10 +23,13 @@ export default class GameStage extends WatchableStage {
     const combineJavaScript = new JavaScriptCombineStage(
       this,
       `combineJavaScript`,
-      [engine, parseJavaScript, parseSvg],
-      () => Object
-        .keys(engine.parsed)
-        .map(key => engine.parsed[key])
+      [readMetadata, engine, parseJavaScript, parseSvg],
+      () => [readMetadata.parsed]
+        .concat(
+          Object
+            .keys(engine.parsed)
+            .map(key => engine.parsed[key])
+        )
         .concat(
           Object
             .keys(parseSvg.parsed)
