@@ -65,11 +65,20 @@ function fade(opacity, sceneGraph) {
   }
 }
 
-function engineRecurseSceneGraph(view, sceneGraph, translationX, translationY, scaleX, scaleY, opacity) {
+function click(sceneGraph, then) {
+  return {
+    click: {
+      sceneGraph: sceneGraph,
+      then: then
+    }
+  }
+}
+
+function engineRecurseSceneGraph(view, sceneGraph, translationX, translationY, scaleX, scaleY, opacity, click) {
   if (sceneGraph) {
     if (Array.isArray(sceneGraph)) {
       sceneGraph.forEach(function (childSceneGraph) {
-        engineRecurseSceneGraph(view, childSceneGraph, translationX, translationY, scaleX, scaleY, opacity)
+        engineRecurseSceneGraph(view, childSceneGraph, translationX, translationY, scaleX, scaleY, opacity, click)
       })
     } else if (sceneGraph.sprite) {
       var object
@@ -104,13 +113,20 @@ function engineRecurseSceneGraph(view, sceneGraph, translationX, translationY, s
           translationY: translationY,
           scaleX: scaleX,
           scaleY: scaleY,
-          opacity: opacity
+          opacity: opacity,
+          click: click
         }
 
         object.element.style.position = "absolute"
         object.element.setAttribute("src", "data:image/svg+xml," + encodeURIComponent(sceneGraph.sprite.svg))
         object.element.style.transform = "translate(" + translationX + "px, " + translationY + "px) scale(" + scaleX + ", " + scaleY + ")"
         object.element.style.opacity = opacity
+        object.element.onclick = function () {
+          if (object.click) {
+            object.click()
+            engineRefresh()
+          }
+        }
         if (view.objects.length > view.emittedElements) {
           view.element.insertBefore(object.element, view.objects[view.emittedElements].element)
         } else {
@@ -138,12 +154,16 @@ function engineRecurseSceneGraph(view, sceneGraph, translationX, translationY, s
         object.opacity = opacity
         object.element.style.opacity = opacity
       }
+
+      object.click = click
     } else if (sceneGraph.move) {
-      engineRecurseSceneGraph(view, sceneGraph.move.sceneGraph, translationX + scaleX * sceneGraph.move.x, translationY + scaleY * sceneGraph.move.y, scaleX, scaleY, opacity)
+      engineRecurseSceneGraph(view, sceneGraph.move.sceneGraph, translationX + scaleX * sceneGraph.move.x, translationY + scaleY * sceneGraph.move.y, scaleX, scaleY, opacity, click)
     } else if (sceneGraph.scale) {
-      engineRecurseSceneGraph(view, sceneGraph.scale.sceneGraph, translationX, translationY, scaleX * sceneGraph.scale.x, scaleY * sceneGraph.scale.y, opacity)
+      engineRecurseSceneGraph(view, sceneGraph.scale.sceneGraph, translationX, translationY, scaleX * sceneGraph.scale.x, scaleY * sceneGraph.scale.y, opacity, click)
     } else if (sceneGraph.fade) {
-      engineRecurseSceneGraph(view, sceneGraph.fade.sceneGraph, translationX, translationY, scaleX, scaleY, opacity * sceneGraph.fade.opacity)
+      engineRecurseSceneGraph(view, sceneGraph.fade.sceneGraph, translationX, translationY, scaleX, scaleY, opacity * sceneGraph.fade.opacity, click)
+    } else if (sceneGraph.click) {
+      engineRecurseSceneGraph(view, sceneGraph.click.sceneGraph, translationX, translationY, scaleX, scaleY, opacity, sceneGraph.click.then)
     }
   }
 }
@@ -173,7 +193,7 @@ function engineRefresh() {
   for (var i = 0; i < engineViews.length; i++) {
     var view = engineViews[i]
     view.emittedElements = 0
-    engineRecurseSceneGraph(view, view.sceneGraphFactory(), x, y, scale, scale, 1)
+    engineRecurseSceneGraph(view, view.sceneGraphFactory(), x, y, scale, scale, 1, null)
     while (view.objects.length > view.emittedElements) {
       var object = view.objects.pop()
       view.element.removeChild(object.element)
