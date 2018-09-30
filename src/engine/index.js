@@ -7,6 +7,26 @@ engineViewport.style.bottom = 0
 engineViewport.style.overflow = "hidden"
 document.body.appendChild(engineViewport)
 
+var engineViews = []
+
+function view(name, sceneGraphFactory) {
+  var newView = {
+    name: name,
+    sceneGraphFactory: sceneGraphFactory,
+    element: document.createElement("DIV"),
+    objects: []
+  }
+  newView.element.style.position = "absolute"
+  newView.element.style.left = 0
+  newView.element.style.right = 0
+  newView.element.style.top = 0
+  newView.element.style.bottom = 0
+  newView.element.style.overflow = "hidden"
+  engineViewport.appendChild(newView.element)
+  engineViews.push(newView)
+  return newView
+}
+
 var borders = {}
 
 function engineRefresh() {
