@@ -138,7 +138,7 @@ class ParseStage extends Stage {
           nextCharacterMustBeUpperCase = true
         }
 
-        const parsed = uglifyJs.minify(`var ${escapedName} = ${JSON.stringify(`data:image/svg+xml,${encodeURIComponent(result.data)}`)}`, {
+        const parsed = uglifyJs.minify(`var ${escapedName} = ${JSON.stringify(result.data)}`, {
           parse: {},
           compress: false,
           mangle: false,
