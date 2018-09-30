@@ -14,7 +14,8 @@ function view(name, sceneGraphFactory) {
     name: name,
     sceneGraphFactory: sceneGraphFactory,
     element: document.createElement("DIV"),
-    objects: []
+    objects: [],
+    paused: false
   }
   newView.element.style.position = "absolute"
   newView.element.style.left = 0
@@ -72,6 +73,14 @@ function click(sceneGraph, then) {
       then: then
     }
   }
+}
+
+function pause(view) {
+  view.paused = true
+}
+
+function resume(view) {
+  view.paused = false
 }
 
 function engineRecurseSceneGraph(view, sceneGraph, translationX, translationY, scaleX, scaleY, opacity, click) {
