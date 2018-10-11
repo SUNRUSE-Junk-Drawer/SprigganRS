@@ -1,3 +1,5 @@
+var state = {}
+
 var engineViewport = document.createElement("DIV")
 engineViewport.style.position = "fixed"
 engineViewport.style.left = 0
