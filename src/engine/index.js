@@ -15,7 +15,8 @@ function view(name, sceneGraphFactory) {
     sceneGraphFactory: sceneGraphFactory,
     element: document.createElement("DIV"),
     objects: [],
-    paused: false
+    paused: false,
+    time: 0
   }
   newView.element.style.position = "absolute"
   newView.element.style.left = 0
@@ -83,11 +84,20 @@ function resume(view) {
   view.paused = false
 }
 
-function engineRecurseSceneGraph(view, sceneGraph, translationX, translationY, scaleX, scaleY, opacity, click) {
+function at(time, callback) {
+  return {
+    delay: {
+      at: time,
+      callback: callback
+    }
+  }
+}
+
+function engineRecurseSceneGraphToRender(view, sceneGraph, translationX, translationY, scaleX, scaleY, opacity, click) {
   if (sceneGraph) {
     if (Array.isArray(sceneGraph)) {
       sceneGraph.forEach(function (childSceneGraph) {
-        engineRecurseSceneGraph(view, childSceneGraph, translationX, translationY, scaleX, scaleY, opacity, click)
+        engineRecurseSceneGraphToRender(view, childSceneGraph, translationX, translationY, scaleX, scaleY, opacity, click)
       })
     } else if (sceneGraph.sprite) {
       var object
@@ -166,20 +176,101 @@ function engineRecurseSceneGraph(view, sceneGraph, translationX, translationY, s
 
       object.click = click
     } else if (sceneGraph.move) {
-      engineRecurseSceneGraph(view, sceneGraph.move.sceneGraph, translationX + scaleX * sceneGraph.move.x, translationY + scaleY * sceneGraph.move.y, scaleX, scaleY, opacity, click)
+      engineRecurseSceneGraphToRender(view, sceneGraph.move.sceneGraph, translationX + scaleX * sceneGraph.move.x, translationY + scaleY * sceneGraph.move.y, scaleX, scaleY, opacity, click)
     } else if (sceneGraph.scale) {
-      engineRecurseSceneGraph(view, sceneGraph.scale.sceneGraph, translationX, translationY, scaleX * sceneGraph.scale.x, scaleY * sceneGraph.scale.y, opacity, click)
+      engineRecurseSceneGraphToRender(view, sceneGraph.scale.sceneGraph, translationX, translationY, scaleX * sceneGraph.scale.x, scaleY * sceneGraph.scale.y, opacity, click)
     } else if (sceneGraph.fade) {
-      engineRecurseSceneGraph(view, sceneGraph.fade.sceneGraph, translationX, translationY, scaleX, scaleY, opacity * sceneGraph.fade.opacity, click)
+      engineRecurseSceneGraphToRender(view, sceneGraph.fade.sceneGraph, translationX, translationY, scaleX, scaleY, opacity * sceneGraph.fade.opacity, click)
     } else if (sceneGraph.click) {
-      engineRecurseSceneGraph(view, sceneGraph.click.sceneGraph, translationX, translationY, scaleX, scaleY, opacity, sceneGraph.click.then)
+      engineRecurseSceneGraphToRender(view, sceneGraph.click.sceneGraph, translationX, translationY, scaleX, scaleY, opacity, sceneGraph.click.then)
     }
   }
 }
 
+function engineRecurseSceneGraphToFindNextEvent(view, sceneGraph) {
+  if (sceneGraph) {
+    if (Array.isArray(sceneGraph)) {
+      var output = null
+      for (var i = 0; i < sceneGraph.length; i++) {
+        var recursed = engineRecurseSceneGraphToFindNextEvent(view, sceneGraph[i])
+        if (recursed && (!output || output.at >= recursed.at)) {
+          output = recursed
+        }
+      }
+      return output
+    } else if (sceneGraph.delay) {
+      return {
+        view: view,
+        at: sceneGraph.delay.at,
+        callback: sceneGraph.delay.callback
+      }
+    }
+  }
+}
+
+function engineGetNextEvent() {
+  var output = null
+  engineViews
+    .filter(function (view) {
+      return !view.paused
+    })
+    .forEach(function (view) {
+      var recursed = engineRecurseSceneGraphToFindNextEvent(view, view.sceneGraphFactory())
+      if (recursed && (!output || output.at - output.view.time >= recursed.at - recursed.view.time)) {
+        output = recursed
+      }
+    })
+  return output
+}
+
 var borders = {}
+var engineNow = + new Date
+
+var engineTimeout = null
 
 function engineRefresh() {
+  if (engineTimeout !== null) {
+    clearTimeout(engineTimeout)
+    engineTimeout = null
+  }
+
+  var nextEvent = engineGetNextEvent()
+
+  var nextEventDelta = nextEvent
+    ? nextEvent.at - nextEvent.view.time
+    : 0
+
+  var nextNow = + new Date
+  var delta = Math.min(
+    (nextNow - engineNow) / 1000,
+    nextEventDelta + 5
+  )
+  engineNow = nextNow
+
+  while (true) {
+    if (nextEvent) {
+      var requiredDelta = nextEvent.at - nextEvent.view.time
+      if (requiredDelta <= delta) {
+        engineViews
+          .filter(function (view) { return !view.paused })
+          .forEach(function (view) { view.time += requiredDelta })
+        delta -= requiredDelta
+        nextEvent.callback()
+        nextEvent = engineGetNextEvent()
+        continue
+      }
+    }
+
+    engineViews
+      .filter(function (view) { return !view.paused })
+      .forEach(function (view) { view.time += delta })
+    break
+  }
+
+  if (nextEvent) {
+    setTimeout(engineRefresh, (nextEvent.at - nextEvent.view.time) * 1000)
+  }
+
   var width = engineViewport.clientWidth
   var height = engineViewport.clientHeight
 
@@ -202,7 +293,7 @@ function engineRefresh() {
   for (var i = 0; i < engineViews.length; i++) {
     var view = engineViews[i]
     view.emittedElements = 0
-    engineRecurseSceneGraph(view, view.sceneGraphFactory(), x, y, scale, scale, 1, null)
+    engineRecurseSceneGraphToRender(view, view.sceneGraphFactory(), x, y, scale, scale, 1, null)
     while (view.objects.length > view.emittedElements) {
       var object = view.objects.pop()
       view.element.removeChild(object.element)
