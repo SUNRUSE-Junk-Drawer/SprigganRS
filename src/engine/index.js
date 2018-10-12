@@ -119,7 +119,7 @@ function engineRecurseSceneGraphToRender(view, sceneGraph, translationX, transla
         }
 
         if (i < view.emittedElements) {
-          throw new Error("Object \"" + s + "\" emitted twice by the \"" + view.name + "\" view")
+          throw new Error("Object \"" + object.name + "\" emitted twice by the \"" + view.name + "\" view")
         }
 
         if (i > view.emittedElements) {
