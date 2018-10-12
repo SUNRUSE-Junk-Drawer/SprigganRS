@@ -103,11 +103,14 @@ function engineNextEventOf(accumulator, currentValue) {
   }
 }
 
-function engineRecurseSceneGraphToRender(view, sceneGraph, translationX, translationY, scaleX, scaleY, opacity, click) {
+var engineBaseTransform
+var engineTransformStack = []
+
+function engineRecurseSceneGraphToRender(view, sceneGraph, click) {
   if (sceneGraph) {
     if (Array.isArray(sceneGraph)) {
       sceneGraph.forEach(function (childSceneGraph) {
-        engineRecurseSceneGraphToRender(view, childSceneGraph, translationX, translationY, scaleX, scaleY, opacity, click)
+        engineRecurseSceneGraphToRender(view, childSceneGraph, click)
       })
     } else if (sceneGraph.sprite) {
       var object
@@ -133,22 +136,33 @@ function engineRecurseSceneGraphToRender(view, sceneGraph, translationX, transla
         break
       }
 
+      var transform = engineBaseTransform
+      var opacity = 1
+
+      engineTransformStack.forEach(function (pass) {
+        if (pass.move) {
+          transform += " translate(" + pass.move.x + "px, " + pass.move.y + "px)"
+        } else if (pass.scale) {
+          transform += " scale(" + pass.scale.x + ", " + pass.scale.y + ")"
+        } else if (pass.fade) {
+          opacity *= pass.fade.opacity
+        }
+      })
+
       if (i == view.objects.length) {
         object = {
           name: sceneGraph.sprite.name,
           element: document.createElement("IMG"),
           svg: sceneGraph.sprite.svg,
-          translationX: translationX,
-          translationY: translationY,
-          scaleX: scaleX,
-          scaleY: scaleY,
+          transform: transform,
           opacity: opacity,
           click: click
         }
 
         object.element.style.position = "absolute"
         object.element.setAttribute("src", "data:image/svg+xml," + encodeURIComponent(sceneGraph.sprite.svg))
-        object.element.style.transform = "translate(" + translationX + "px, " + translationY + "px) scale(" + scaleX + ", " + scaleY + ")"
+        object.element.style.transformOrigin = "left top"
+        object.element.style.transform = transform
         object.element.style.opacity = opacity
         object.element.onclick = function () {
           if (object.click) {
@@ -171,12 +185,9 @@ function engineRecurseSceneGraphToRender(view, sceneGraph, translationX, transla
         object.element.setAttribute("src", "data:image/svg+xml," + encodeURIComponent(sceneGraph.sprite.svg))
       }
 
-      if (object.translationX != translationX || object.translationY != translationY || object.scaleX != scaleX || object.scaleY != scaleY) {
-        object.translationX = translationX
-        object.translationY = translationY
-        object.scaleX = scaleX
-        object.scaleY = scaleY
-        object.element.style.transform = "translate(" + translationX + "px, " + translationY + "px) scale(" + scaleX + ", " + scaleY + ")"
+      if (transform != object.transform) {
+        object.transform = transform
+        object.element.style.transform = transform
       }
 
       if (object.opacity != opacity) {
@@ -186,13 +197,21 @@ function engineRecurseSceneGraphToRender(view, sceneGraph, translationX, transla
 
       object.click = click
     } else if (sceneGraph.move) {
-      engineRecurseSceneGraphToRender(view, sceneGraph.move.sceneGraph, translationX + scaleX * sceneGraph.move.x, translationY + scaleY * sceneGraph.move.y, scaleX, scaleY, opacity, click)
+      engineTransformStack.push(sceneGraph)
+      engineRecurseSceneGraphToRender(view, sceneGraph.move.sceneGraph, click)
+      engineTransformStack.pop()
     } else if (sceneGraph.scale) {
-      engineRecurseSceneGraphToRender(view, sceneGraph.scale.sceneGraph, translationX, translationY, scaleX * sceneGraph.scale.x, scaleY * sceneGraph.scale.y, opacity, click)
+      engineTransformStack.push(sceneGraph)
+      engineRecurseSceneGraphToRender(view, sceneGraph.scale.sceneGraph, click)
+      engineTransformStack.pop()
     } else if (sceneGraph.fade) {
-      engineRecurseSceneGraphToRender(view, sceneGraph.fade.sceneGraph, translationX, translationY, scaleX, scaleY, opacity * sceneGraph.fade.opacity, click)
+      engineTransformStack.push(sceneGraph)
+      engineRecurseSceneGraphToRender(view, sceneGraph.fade.sceneGraph, click)
+      engineTransformStack.pop()
     } else if (sceneGraph.click) {
-      engineRecurseSceneGraphToRender(view, sceneGraph.click.sceneGraph, translationX, translationY, scaleX, scaleY, opacity, sceneGraph.click.then)
+      engineTransformStack.push(sceneGraph)
+      engineRecurseSceneGraphToRender(view, sceneGraph.click.sceneGraph, sceneGraph.click.then)
+      engineTransformStack.pop()
     }
   }
 }
@@ -308,10 +327,12 @@ function engineRefresh() {
   var x = borders.left * -scale
   var y = borders.top * -scale
 
+  engineBaseTransform = "translate(" + x + "px, " + y + "px) scale(" + scale + ")"
+
   for (var i = 0; i < engineViews.length; i++) {
     var view = engineViews[i]
     view.emittedElements = 0
-    engineRecurseSceneGraphToRender(view, view.sceneGraphFactory(), x, y, scale, scale, 1, null)
+    engineRecurseSceneGraphToRender(view, view.sceneGraphFactory(), null)
     while (view.objects.length > view.emittedElements) {
       var object = view.objects.pop()
       view.element.removeChild(object.element)
