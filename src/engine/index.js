@@ -95,6 +95,14 @@ function at(time, callback) {
   }
 }
 
+function engineNextEventOf(accumulator, currentValue) {
+  if (currentValue && (!accumulator || currentValue.at < accumulator.at)) {
+    return currentValue
+  } else {
+    return accumulator
+  }
+}
+
 function engineRecurseSceneGraphToRender(view, sceneGraph, translationX, translationY, scaleX, scaleY, opacity, click) {
   if (sceneGraph) {
     if (Array.isArray(sceneGraph)) {
@@ -194,10 +202,10 @@ function engineRecurseSceneGraphToFindNextEvent(view, sceneGraph) {
     if (Array.isArray(sceneGraph)) {
       var output = null
       for (var i = 0; i < sceneGraph.length; i++) {
-        var recursed = engineRecurseSceneGraphToFindNextEvent(view, sceneGraph[i])
-        if (recursed && (!output || output.at >= recursed.at)) {
-          output = recursed
-        }
+        output = engineNextEventOf(
+          output,
+          engineRecurseSceneGraphToFindNextEvent(view, sceneGraph[i])
+        )
       }
       return output
     } else if (sceneGraph.move) {
@@ -225,10 +233,10 @@ function engineGetNextEvent() {
       return !view.paused
     })
     .forEach(function (view) {
-      var recursed = engineRecurseSceneGraphToFindNextEvent(view, view.sceneGraphFactory())
-      if (recursed && (!output || output.at - output.view.time >= recursed.at - recursed.view.time)) {
-        output = recursed
-      }
+      output = engineNextEventOf(
+        output,
+        engineRecurseSceneGraphToFindNextEvent(view, view.sceneGraphFactory())
+      )
     })
   return output
 }
