@@ -200,6 +200,14 @@ function engineRecurseSceneGraphToFindNextEvent(view, sceneGraph) {
         }
       }
       return output
+    } else if (sceneGraph.move) {
+      return engineRecurseSceneGraphToFindNextEvent(view, sceneGraph.move.sceneGraph)
+    } else if (sceneGraph.scale) {
+      return engineRecurseSceneGraphToFindNextEvent(view, sceneGraph.scale.sceneGraph)
+    } else if (sceneGraph.fade) {
+      return engineRecurseSceneGraphToFindNextEvent(view, sceneGraph.fade.sceneGraph)
+    } else if (sceneGraph.click) {
+      return engineRecurseSceneGraphToFindNextEvent(view, sceneGraph.click.sceneGraph)
     } else if (sceneGraph.delay) {
       return {
         view: view,
