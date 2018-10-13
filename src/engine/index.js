@@ -183,24 +183,69 @@ function engineRecurseSceneGraphToRender(view, sceneGraph, click) {
         break
       }
 
-      var transform = engineBuildTransformString(view.time)
-      var opacity = engineCalculateOpacity(view.time)
+      var start = null
+      var end = null
+      var transformFrom, transformTo, opacityFrom, opacityTo
+      var startDate, endDate
+
+      if (view.paused) {
+        transformFrom = engineBuildTransformString(view.time)
+        transformTo = null
+        opacityFrom = engineCalculateOpacity(view.time)
+        opacityTo = null
+        startDate = null
+        endDate = null
+      } else {
+        engineTransformStack.forEach(function (pass) {
+          if (pass.moveBetween
+            && pass.moveBetween.start <= view.time
+            && pass.moveBetween.end > view.time) {
+            if (start == null) {
+              start = pass.moveBetween.start
+              end = pass.moveBetween.end
+            } else {
+              start = Math.max(start, pass.moveBetween.start)
+              end = Math.min(end, pass.moveBetween.end)
+            }
+          }
+        })
+
+        if (start == null) {
+          transformFrom = engineBuildTransformString(view.time)
+          transformTo = null
+          opacityFrom = engineCalculateOpacity(view.time)
+          opacityTo = null
+          startDate = null
+          endDate = null
+        } else {
+          transformFrom = engineBuildTransformString(start)
+          transformTo = engineBuildTransformString(end)
+          opacityFrom = engineCalculateOpacity(start)
+          opacityTo = engineCalculateOpacity(end)
+          startDate = (engineNow / 1000) + start - game.time
+          endDate = (engineNow / 1000) + end - game.time
+        }
+      }
 
       if (i == view.objects.length) {
         object = {
           name: sceneGraph.sprite.name,
           element: document.createElement("IMG"),
           svg: sceneGraph.sprite.svg,
-          transform: transform,
-          opacity: opacity,
+          transformFrom: transformFrom,
+          transformTo: transformTo,
+          opacityFrom: opacityFrom,
+          opacityTo: opacityTo,
+          startDate: startDate,
+          endDate: endDate,
           click: click
         }
 
         object.element.style.position = "absolute"
         object.element.setAttribute("src", "data:image/svg+xml," + encodeURIComponent(sceneGraph.sprite.svg))
         object.element.style.transformOrigin = "left top"
-        object.element.style.transform = transform
-        object.element.style.opacity = opacity
+        object.element.style.transform = transformFrom
+        object.element.style.opacity = opacityFrom
         object.element.onclick = function () {
           if (object.click) {
             object.click()
@@ -212,6 +257,12 @@ function engineRecurseSceneGraphToRender(view, sceneGraph, click) {
         } else {
           view.element.appendChild(object.element)
         }
+        if (end != null) {
+          window.getComputedStyle(object.element, undefined).getPropertyValue("left")
+          object.element.style.transition = "transform " + (end - start) + "s linear, opacity" + (end - start) + "s linear"
+          object.element.style.transform = transformTo
+          object.element.style.opacity = opacityTo
+        }
         view.objects.splice(view.emittedElements, 0, object)
         view.emittedElements++
         return
@@ -222,14 +273,30 @@ function engineRecurseSceneGraphToRender(view, sceneGraph, click) {
         object.element.setAttribute("src", "data:image/svg+xml," + encodeURIComponent(sceneGraph.sprite.svg))
       }
 
-      if (transform != object.transform) {
-        object.transform = transform
-        object.element.style.transform = transform
-      }
-
-      if (object.opacity != opacity) {
-        object.opacity = opacity
-        object.element.style.opacity = opacity
+      if (
+        transformFrom != object.transformFrom
+        || transformTo != object.transformTo
+        || opacityFrom != object.opacityFrom
+        || opacityTo != object.opacityTo
+        || Math.abs(startDate - object.startDate) > 0.01
+        || Math.abs(endDate - object.endDate) > 0.01
+      ) {
+        object.element.style.transform = transformFrom
+        object.element.style.opacity = opacityFrom
+        if (end == null) {
+          object.element.style.transition = "initial"
+        } else {
+          window.getComputedStyle(object.element, undefined).getPropertyValue("left")
+          object.element.style.transition = "transform " + (end - start) + "s linear, opacity" + (end - start) + "s linear"
+          object.element.style.transform = transformTo
+          object.element.style.opacity = opacityTo
+        }
+        object.transformFrom = transformFrom
+        object.transformTo = transformTo
+        object.opacityFrom = opacityFrom
+        object.opacityTo = opacityTo
+        object.startDate = startDate
+        object.endDate = endDate
       }
 
       object.click = click
