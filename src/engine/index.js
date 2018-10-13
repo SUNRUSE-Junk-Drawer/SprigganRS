@@ -248,8 +248,7 @@ function engineRecurseSceneGraphToRender(view, sceneGraph, click) {
         object.element.style.opacity = opacityFrom
         object.element.onclick = function () {
           if (object.click) {
-            object.click()
-            engineRefresh()
+            engineRefresh(object.click)
           }
         }
         if (view.objects.length > view.emittedElements) {
@@ -399,7 +398,7 @@ var engineNow = + new Date
 
 var engineTimeout = null
 
-function engineRefresh() {
+function engineRefresh(callback) {
   if (engineTimeout !== null) {
     clearTimeout(engineTimeout)
     engineTimeout = null
@@ -417,6 +416,25 @@ function engineRefresh() {
     nextEventDelta + 0.25
   )
   engineNow = nextNow
+
+  if (callback) {
+    var callbackDelta
+    if (nextEvent) {
+      callbackDelta = Math.min(nextEvent.at, delta)
+    } else {
+      callbackDelta = delta
+    }
+
+    engineViews
+      .filter(function (view) { return !view.paused })
+      .forEach(function (view) { view.time += callbackDelta })
+
+    delta -= callbackDelta
+
+    callback()
+
+    nextEvent = engineGetNextEvent()
+  }
 
   while (true) {
     if (nextEvent) {
