@@ -106,6 +106,28 @@ function engineNextEventOf(accumulator, currentValue) {
 var engineBaseTransform
 var engineTransformStack = []
 
+function engineBuildTransformString(at) {
+  var output = engineBaseTransform
+  engineTransformStack.forEach(function (pass) {
+    if (pass.move) {
+      output += " translate(" + pass.move.x + "px, " + pass.move.y + "px)"
+    } else if (pass.scale) {
+      output += " scale(" + pass.scale.x + ", " + pass.scale.y + ")"
+    }
+  })
+  return output
+}
+
+function engineCalculateOpacity(at) {
+  var output = 1
+  engineTransformStack.forEach(function (pass) {
+    if (pass.fade) {
+      output *= pass.fade.opacity
+    }
+  })
+  return output
+}
+
 function engineRecurseSceneGraphToRender(view, sceneGraph, click) {
   if (sceneGraph) {
     if (Array.isArray(sceneGraph)) {
@@ -136,18 +158,8 @@ function engineRecurseSceneGraphToRender(view, sceneGraph, click) {
         break
       }
 
-      var transform = engineBaseTransform
-      var opacity = 1
-
-      engineTransformStack.forEach(function (pass) {
-        if (pass.move) {
-          transform += " translate(" + pass.move.x + "px, " + pass.move.y + "px)"
-        } else if (pass.scale) {
-          transform += " scale(" + pass.scale.x + ", " + pass.scale.y + ")"
-        } else if (pass.fade) {
-          opacity *= pass.fade.opacity
-        }
-      })
+      var transform = engineBuildTransformString(view.time)
+      var opacity = engineCalculateOpacity(view.time)
 
       if (i == view.objects.length) {
         object = {
