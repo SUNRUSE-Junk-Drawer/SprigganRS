@@ -347,7 +347,7 @@ function engineRefresh() {
   var nextNow = + new Date
   var delta = Math.min(
     (nextNow - engineNow) / 1000,
-    nextEventDelta + 5
+    nextEventDelta + 0.25
   )
   engineNow = nextNow
 
