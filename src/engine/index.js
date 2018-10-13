@@ -50,6 +50,21 @@ function move(x, y, sceneGraph) {
   }
 }
 
+function moveBetween(fromX, fromY, toX, toY, start, end, sceneGraph, callback) {
+  return {
+    moveBetween: {
+      fromX: fromX,
+      fromY: fromY,
+      toX: toX,
+      toY: toY,
+      start: start,
+      end: end,
+      sceneGraph: sceneGraph,
+      callback: callback
+    }
+  }
+}
+
 function scale(x, y, sceneGraph) {
   return {
     scale: {
@@ -111,6 +126,16 @@ function engineBuildTransformString(at) {
   engineTransformStack.forEach(function (pass) {
     if (pass.move) {
       output += " translate(" + pass.move.x + "px, " + pass.move.y + "px)"
+    } else if (pass.moveBetween) {
+      if (at <= pass.moveBetween.start) {
+        output += " translate(" + pass.moveBetween.fromX + "px, " + pass.moveBetween.fromY + "px)"
+      } else if (at >= pass.moveBetween.end) {
+        output += " translate(" + pass.moveBetween.toX + "px, " + pass.moveBetween.toY + "px)"
+      } else {
+        var alpha = (at - pass.moveBetween.start) / (pass.moveBetween.end - pass.moveBetween.start)
+        var inverseAlpha = 1 - alpha
+        output += " translate(" + (pass.moveBetween.fromX * inverseAlpha + pass.moveBetween.toX * alpha) + "px, " + (pass.moveBetween.fromY * inverseAlpha + pass.moveBetween.toY * alpha) + "px)"
+      }
     } else if (pass.scale) {
       output += " scale(" + pass.scale.x + ", " + pass.scale.y + ")"
     }
@@ -212,6 +237,10 @@ function engineRecurseSceneGraphToRender(view, sceneGraph, click) {
       engineTransformStack.push(sceneGraph)
       engineRecurseSceneGraphToRender(view, sceneGraph.move.sceneGraph, click)
       engineTransformStack.pop()
+    } else if (sceneGraph.moveBetween) {
+      engineTransformStack.push(sceneGraph)
+      engineRecurseSceneGraphToRender(view, sceneGraph.moveBetween.sceneGraph, click)
+      engineTransformStack.pop()
     } else if (sceneGraph.scale) {
       engineTransformStack.push(sceneGraph)
       engineRecurseSceneGraphToRender(view, sceneGraph.scale.sceneGraph, click)
@@ -228,6 +257,8 @@ function engineRecurseSceneGraphToRender(view, sceneGraph, click) {
   }
 }
 
+function engineNoOp() { }
+
 function engineRecurseSceneGraphToFindNextEvent(view, sceneGraph) {
   if (sceneGraph) {
     if (Array.isArray(sceneGraph)) {
@@ -241,6 +272,30 @@ function engineRecurseSceneGraphToFindNextEvent(view, sceneGraph) {
       return output
     } else if (sceneGraph.move) {
       return engineRecurseSceneGraphToFindNextEvent(view, sceneGraph.move.sceneGraph)
+    } else if (sceneGraph.moveBetween) {
+      var output
+      if (sceneGraph.moveBetween.start > view.time) {
+        output = {
+          view: view,
+          at: sceneGraph.moveBetween.start,
+          callback: engineNoOp
+        }
+      } else if (sceneGraph.moveBetween.callback) {
+        output = {
+          view: view,
+          at: sceneGraph.moveBetween.end,
+          callback: sceneGraph.moveBetween.callback
+        }
+      } else if (sceneGraph.moveBetween.end > view.time) {
+        output = {
+          view: view,
+          at: sceneGraph.moveBetween.end,
+          callback: engineNoOp
+        }
+      } else {
+        output = null
+      }
+      return engineNextEventOf(output, engineRecurseSceneGraphToFindNextEvent(view, sceneGraph.moveBetween.sceneGraph))
     } else if (sceneGraph.scale) {
       return engineRecurseSceneGraphToFindNextEvent(view, sceneGraph.scale.sceneGraph)
     } else if (sceneGraph.fade) {
