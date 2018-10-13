@@ -244,7 +244,7 @@ function engineRecurseSceneGraphToRender(view, sceneGraph, click) {
         object.element.style.position = "absolute"
         object.element.setAttribute("src", "data:image/svg+xml," + encodeURIComponent(sceneGraph.sprite.svg))
         object.element.style.transformOrigin = "left top"
-        object.element.style.transform = transformFrom
+        object.element.style.transform = end == null ? transformFrom : engineBuildTransformString(view.time)
         object.element.style.opacity = opacityFrom
         object.element.onclick = function () {
           if (object.click) {
@@ -258,7 +258,7 @@ function engineRecurseSceneGraphToRender(view, sceneGraph, click) {
         }
         if (end != null) {
           window.getComputedStyle(object.element, undefined).getPropertyValue("left")
-          object.element.style.transition = "transform " + (end - start) + "s linear, opacity" + (end - start) + "s linear"
+          object.element.style.transition = "transform " + (end - view.time) + "s linear, opacity" + (end - view.time) + "s linear"
           object.element.style.transform = transformTo
           object.element.style.opacity = opacityTo
         }
@@ -280,13 +280,13 @@ function engineRecurseSceneGraphToRender(view, sceneGraph, click) {
         || Math.abs(startDate - object.startDate) > 0.01
         || Math.abs(endDate - object.endDate) > 0.01
       ) {
-        object.element.style.transform = transformFrom
+        object.element.style.transform = end == null ? transformFrom : engineBuildTransformString(view.time)
         object.element.style.opacity = opacityFrom
         if (end == null) {
           object.element.style.transition = "initial"
         } else {
           window.getComputedStyle(object.element, undefined).getPropertyValue("left")
-          object.element.style.transition = "transform " + (end - start) + "s linear, opacity" + (end - start) + "s linear"
+          object.element.style.transition = "transform " + (end - view.time) + "s linear, opacity" + (end - view.time) + "s linear"
           object.element.style.transform = transformTo
           object.element.style.opacity = opacityTo
         }
