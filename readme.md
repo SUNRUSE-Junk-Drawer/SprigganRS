@@ -75,6 +75,16 @@ by slashes to form hierarchy:
 }
 ```
 
+If the path ends with two slashes, this is taken to mean a file with a name of
+a slash inside a folder:
+
+| Input             | 1     | 2       | 3   |
+|-------------------|-------|---------|-----|
+| `fonts/default//` | fonts | default | /   |
+| `fonts/default/\` | fonts | default | \   |
+| `fonts\default\/` | fonts | default | /   |
+| `fonts\default\\` | fonts | default | \   |
+
 ### borders
 
 Contains the borders of the page, in scene graph coordinates.
