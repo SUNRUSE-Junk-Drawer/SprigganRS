@@ -34,12 +34,46 @@ The coordinate space is a number of "units" wide (X) and tall (Y) (defined in th
 | Name    | Initialization | Views     | Callbacks  |
 |---------|----------------|-----------|------------|
 | state   | Read/write     | Read-only | Read/write |
+| content | Read-only      | Read-only | Read-only  |
 | borders | No             | Read-only | No         |
 
 ### state
 
 The JSON-serializable game state.
 Initially an empty anonymous object.
+
+### content
+
+Any files considered content are stored inside an object.  Filenames are split
+by slashes to form hierarchy:
+
+- `a/b/c/d`
+- `e/f/g/h`
+- `a/b/i/j`
+- `a/b/c/k`
+
+```json
+{
+  a: {
+    b: {
+      c: {
+        d: "(varies by content type)",
+        k: "(varies by content type)"
+      },
+      i: {
+        j: "(varies by content type)"
+      }
+    }
+  },
+  e: {
+    f: {
+      g: {
+        h: "(varies by content type)"
+      }
+    }
+  }
+}
+```
 
 ### borders
 
@@ -396,15 +430,23 @@ Included as game code.  The order in which it is included is non-deterministic.
 
 ### src/games/(game name)/**/*.svg
 
-Included in the game; declarations are added to the JavaScript global namespace.
-However, the name requires some manipulation to fit into a JavaScript variable
-name.
+Included in the `content` object.  If an Inkscape SVG with multiple layers is
+found, it is split into one piece of content per layer and their names are
+included in their file names; a file with a name of:
 
-For example:
-`src/games/Example Game/Example Dir A/Example Dir B/Example Dir C/Example File.svg`
+`a/b/c.svg`
 
-Becomes:
-`exampleDirAExampleDirBExampleDirCExampleFileSvg`
+Containing layers:
+
+- `d/e/f`
+- `g/h/i`
+- `j/k/l`
+
+Is equivalent to separate files of:
+
+- `a/b/c/d/e/f`
+- `a/b/c/g/h/i`
+- `a/b/c/j/k/l`
 
 ## Building
 
