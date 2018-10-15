@@ -30,11 +30,7 @@ export default class GameStage extends WatchableStage {
             .keys(engine.parsed)
             .map(key => engine.parsed[key])
         )
-        .concat(
-          Object
-            .keys(parseSvg.parsed)
-            .map(key => parseSvg.parsed[key])
-        )
+        .concat(parseSvg.parsed.map(parsed => parsed.contents))
         .concat(
           Object
             .keys(parseJavaScript.parsed)
