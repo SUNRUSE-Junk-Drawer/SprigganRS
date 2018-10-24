@@ -27,18 +27,6 @@ A "safe zone" (shown unshaded) is centered in the page and scaled to be as large
 
 The coordinate space is a number of "units" wide (X) and tall (Y) (defined in the game's "metadata.json"), where 0, 0 is the top left corner.
 
-## Game script
-
-A game script is structured as follows:
-
-```js
-const game = () => {
-  /* View. */
-}
-
-const ui = () => {
-  /* View. */
-}
 ```
 
 ## Variables
@@ -46,13 +34,56 @@ const ui = () => {
 | Name    | Initialization | Views     | Callbacks  |
 |---------|----------------|-----------|------------|
 | state   | Read/write     | Read-only | Read/write |
+| content | Read-only      | Read-only | Read-only  |
 | borders | No             | Read-only | No         |
-| times   | Read-only      | Read-only | Read-only  |
 
 ### state
 
 The JSON-serializable game state.
 Initially an empty anonymous object.
+
+### content
+
+Any files considered content are stored inside an object.  Filenames are split
+by slashes to form hierarchy:
+
+- `a/b/c/d`
+- `e/f/g/h`
+- `a/b/i/j`
+- `a/b/c/k`
+
+```json
+{
+  a: {
+    b: {
+      c: {
+        d: "(varies by content type)",
+        k: "(varies by content type)"
+      },
+      i: {
+        j: "(varies by content type)"
+      }
+    }
+  },
+  e: {
+    f: {
+      g: {
+        h: "(varies by content type)"
+      }
+    }
+  }
+}
+```
+
+If the path ends with two slashes, this is taken to mean a file with a name of
+a slash inside a folder:
+
+| Input             | 1     | 2       | 3   |
+|-------------------|-------|---------|-----|
+| `fonts/default//` | fonts | default | /   |
+| `fonts/default/\` | fonts | default | \   |
+| `fonts\default\/` | fonts | default | /   |
+| `fonts\default\\` | fonts | default | \   |
 
 ### borders
 
@@ -66,22 +97,12 @@ console.log(borders.top)    /* 0 */
 console.log(borders.bottom) /* 180 */
 ```
 
-### times
-
-Elapsed times, in seconds.
-
-```js
-/* When the game has been running for 6.2 seconds, but the game was paused after 4.9. */
-console.log(times.game) /* 4.9 */
-console.log(times.ui)   /* 6.2 */
-```
-
-Note: it is important these be used over any external timers as they are monotonic, and will indicate the time for the event being processed, not the actual elapsed time.
-
 ## Functions
 
 | Name         | Initialization | Views | Callbacks |
 |--------------|----------------|-------|-----------|
+| view         | Yes            | No    | No        |
+| sprite       | No             | Yes   | No        |
 | move         | No             | Yes   | No        |
 | moveBetween  | No             | Yes   | No        |
 | moveAt       | No             | Yes   | No        |
@@ -91,59 +112,95 @@ Note: it is important these be used over any external timers as they are monoton
 | fadeBetween  | No             | Yes   | No        |
 | click        | No             | Yes   | No        |
 | at           | No             | Yes   | No        |
-| batch        | No             | Yes   | No        |
-| keepBatch    | No             | Yes   | No        |
+| batch        | Yes            | No    | Yes       |
 | pause        | Yes            | No    | Yes       |
 | resume       | Yes            | No    | Yes       |
+
+### View
+
+Defines a new view "pass"/"layer".
+
+```js
+var viewReference = view("View Name", function() {
+  return aSceneGraph
+})
+```
+
+### Sprite
+
+Draws a specified SVG.
+
+```js
+var sceneGraph = sprite("Object Name", stringContainingSvgWhichWasLikelyImported)
+```
 
 ### Move
 
 Translates a child by a given number of units.
 
 ```js
-move(14, 7, () => {
-  /* The child scene graph to move 14 units right and 7 units down. */
-})
+var sceneGraph = move(
+  14, // 14 units right.
+  7,  // 7 units down.
+  childSceneGraph
+)
+```
 
-moveBetween(14, 7, 11, 29, 46, 72, () => {
-  /* The child scene graph; linearly interpolates
-     from 14 units right and 7 units down
-     to 11 units right and 29 units down
-     between 46 and 72 seconds of elapsed time. */
-})
+```js
+var sceneGraph = moveBetween(
+  14, // Linearly interpolate from 14 units right.
+  7,  // Linearly interpolate from 7 units down.
+  11, // Linearly interpolate to 11 units right.
+  29, // Linearly interpolate to 29 units down.
+  46, // Start moving at 46 seconds of elapsed time.
+  72, // Stop moving at 72 seconds of elapsed time.
+  childSceneGraph
+)
+```
 
-moveBetween(14, 7, 11, 29, 46, 72, () => {
-  /* The child scene graph; linearly interpolates
-     from 14 units right and 7 units down
-     to 11 units right and 29 units down
-     between 46 and 72 seconds of elapsed time. */
-}, () => {
-  /* Callback executed at 72 seconds of elapsed time. */
-})
+```js
+var sceneGraph = moveBetween(
+  14, // Linearly interpolate from 14 units right.
+  7,  // Linearly interpolate from 7 units down.
+  11, // Linearly interpolate to 11 units right.
+  29, // Linearly interpolate to 29 units down.
+  46, // Start moving at 46 seconds of elapsed time.
+  72, // Stop moving at 72 seconds of elapsed time.
+  childSceneGraph,
+  function() { /* Executed at 72 seconds of elapsed time. */ }
+)
+```
 
-moveAt(14, 7, 11, 29, 46, 2, () => {
-  /* The child scene graph; linearly interpolates
-     from 14 units right and 7 units down
-     to 11 units right and 29 units down
-     at 2 units per second starting at 46 seconds of elapsed time. */
-})
+```js
+var sceneGraph = moveBetween(
+  14, // Linearly interpolate from 14 units right.
+  7,  // Linearly interpolate from 7 units down.
+  11, // Linearly interpolate to 11 units right.
+  29, // Linearly interpolate to 29 units down.
+  46, // Start moving at 46 seconds of elapsed time.
+  2,  // Moves at 2 units per second.
+  childSceneGraph
+)
+```
 
-moveAt(14, 7, 11, 29, 46, 2, () => {
-  /* The child scene graph; linearly interpolates
-     from 14 units right and 7 units down
-     to 11 units right and 29 units down
-     at 2 units per second starting at 46 seconds of elapsed time. */
-}, () => {
-  /* Callback executed on reaching the destination. */
-})
+```js
+var sceneGraph = moveBetween(
+  14, // Linearly interpolate from 14 units right.
+  7,  // Linearly interpolate from 7 units down.
+  11, // Linearly interpolate to 11 units right.
+  29, // Linearly interpolate to 29 units down.
+  46, // Start moving at 46 seconds of elapsed time.
+  2,  // Move at 2 units per second.
+  childSceneGraph,
+  function() { /* Executed on reaching the destination. */ }
+)
 ```
 
 Note: if wrapped in a scaling function, the move itself will be scaled:
 
 ```js
-scale(0.5, () => move(14, 6, () => {
-  /* Actually moves 7, 3 units. */
-}))
+// Actually moves 7, 12 units.
+var sceneGraph = scale(0.5, 2, move(14, 6, childSceneGraph))
 ```
 
 ### Scale
@@ -151,18 +208,36 @@ scale(0.5, () => move(14, 6, () => {
 Multiplies the size of a child scene graph by a given factor.
 
 ```js
-scale(2, 0.5, () => {
-  /* The child scene graph to double in size on the X axis and halve in size on the Y axis. */
-})
+var sceneGraph = scale(
+  2,   // Double in size horizontally.
+  0.5, // Halve in size vertically.
+  childSceneGraph
+)
+```
 
-scaleBetween(2, 0.5, 3, 0.25, 46, 72, () => {
-  /* The child scene graph; linearly interpolates
-     from doubling in size on the X axis and halving in size on the Y axis
-     to tripling in size on the X axis in dividing its size by 4 four on the Y axis
-     between 46 and 72 seconds of elapsed time. */
-}, () => {
-  /* Callback executed at 72 seconds of elapsed time. */
-})
+```js
+var sceneGraph = scale(
+  2,    // Linearly interpolate from doubling in size horizontally.
+  0.5,  // Linearly interpolate from halving in size vertically.
+  3,    // Linearly interpolate to tripling in size horizontally.
+  0.25, // Linearly interpolate to dividing its size by 4 vertically.
+  46,   // Start scaling at 46 seconds of elapsed time.
+  72,   // Stop scaling at 72 seconds of elapsed time.
+  childSceneGraph
+)
+```
+
+```js
+var sceneGraph = scale(
+  2,    // Linearly interpolate from doubling in size horizontally.
+  0.5,  // Linearly interpolate from halving in size vertically.
+  3,    // Linearly interpolate to tripling in size horizontally.
+  0.25, // Linearly interpolate to dividing its size by 4 vertically.
+  46,   // Start scaling at 46 seconds of elapsed time.
+  72,   // Stop scaling at 72 seconds of elapsed time.
+  childSceneGraph,
+  function() { /* Executed at the end of the scaling. */ }
+)
 ```
 
 ### Fade
@@ -172,25 +247,31 @@ Clamped to 0 and 1 at the time of emitting objects.
 This additionally adjusts the volume of sounds.
 
 ```js
-fade(0.5, () => {
-  /* The child scene graph to make semi-transparent. */
-})
+var sceneGraph = fade(
+  0.3, // 30% opacity.
+  childSceneGraph
+)
+```
 
-fadeBetween(0.25, 0.75, 46, 72, () => {
-  /* The child scene graph; linearly interpolates
-     from 25% opacity
-     to 75% opacity
-     between 46 and 72 seconds of elapsed time. */
-})
+```js
+var sceneGraph = fadeBetween(
+  0.25, // Linearly interpolate from 25% opacity.
+  0.75, // Linearly interpolate to 75% opacity.
+  46,   // Start fading at 46 seconds of elapsed time.
+  72,   // Stop fading at 72 seconds of elapsed time.
+  childSceneGraph
+)
+```
 
-fadeBetween(0.25, 0.75, 46, 72, () => {
-  /* The child scene graph; linearly interpolates
-     from 25% opacity
-     to 75% opacity
-     between 46 and 72 seconds of elapsed time. */
-}, () => {
-  /* Callback executed at the end of the fade. */
-})
+```js
+var sceneGraph = fadeBetween(
+  0.25, // Linearly interpolate from 25% opacity.
+  0.75, // Linearly interpolate to 75% opacity.
+  46,   // Start fading at 46 seconds of elapsed time.
+  72,   // Stop fading at 72 seconds of elapsed time.
+  childSceneGraph,
+  function() { /* Executed at the end of the fading. */ }
+)
 ```
 
 ### Click
@@ -198,26 +279,26 @@ fadeBetween(0.25, 0.75, 46, 72, () => {
 Executes a callback (and subsequently re-renders) on clicking on any object emitted by a child scene graph.
 
 ```js
-click(() => {
-  /* Called on clicking on the below child scene graph. */
-}, () => {
-  /* The child scene graph which can be clicked on. */
-})
+var sceneGraph = click(
+  childSceneGraph,
+  function () { /* Executed on clicking on the below child scene graph. */ }
+)
 ```
 
 Note: if multiple calls are nested, only the inner-most handler will be used on clicking on its children:
 
 ```js
-click(() => {
-  /* Called only on clicking on A or C. */
-}, () => {
-  /* A. */
-  click(() => {
-    /* Called only on clicking on B. */
-  }, () => {
-    /* B. */
-  })
-  /* C. */
+click([
+  childSceneGraphA,
+  click(
+    childSceneGraphB,
+    function() {
+      /* Called only on clicking on childSceneGraphB. */
+    }
+  ),
+  childSceneGraphC
+], function() {
+/* Called only on clicking on childSceneGraphA or childSceneGraphC. */
 })
 ```
 
@@ -226,7 +307,7 @@ click(() => {
 Executes a callback (and subsequently re-renders) at a specified time.
 
 ```js
-at(46, () => {
+var sceneGraph = at(46, function () {
   /* Called at 46 seconds of elapsed time. */
 })
 ```
@@ -236,29 +317,25 @@ at(46, () => {
 Caches a complex child scene graph, meaning it is only generated once.
 
 ```js
-batch(`Object Name`, `Cache Key`, () => { /* Scene graph to draw. */ })
-```
+var cached = batch(childSceneGraph)
 
-Note: the cache will be dropped if it is not used during a scene.  Call keepBatch to keep it cached without actually drawing it.
-
-```js
-keepBatch(`Cache Key`, () => { /* Scene graph to cache, but not draw. */ })
+var sceneGraph = sprite("Object Name", cached)
 ```
 
 ### Pause
 
-Pauses the game timer.  Has no effect if already paused.
+Pauses a view's timer.  Has no effect if already paused.
 
 ```js
-pause()
+pause(viewReference)
 ```
 
 ### Resume
 
-Unpauses the game timer.  Has no effect if not paused.
+Unpauses a view's timer.  Has no effect if not paused.
 
 ```js
-resume()
+resume(viewReference)
 ```
 
 ## Project Structure
@@ -363,15 +440,23 @@ Included as game code.  The order in which it is included is non-deterministic.
 
 ### src/games/(game name)/**/*.svg
 
-Included in the game; declarations are added to the JavaScript global namespace.
-However, the name requires some manipulation to fit into a JavaScript variable
-name.
+Included in the `content` object.  If an Inkscape SVG with multiple layers is
+found, it is split into one piece of content per layer and their names are
+included in their file names; a file with a name of:
 
-For example:
-`src/games/Example Game/Example Dir A/Example Dir B/Example Dir C/Example File.svg`
+`a/b/c.svg`
 
-Becomes:
-`exampleDirAExampleDirBExampleDirCExampleFileSvg`
+Containing layers:
+
+- `d/e/f`
+- `g/h/i`
+- `j/k/l`
+
+Is equivalent to separate files of:
+
+- `a/b/c/d/e/f`
+- `a/b/c/g/h/i`
+- `a/b/c/j/k/l`
 
 ## Building
 

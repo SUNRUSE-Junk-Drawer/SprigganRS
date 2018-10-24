@@ -89,12 +89,11 @@ const svgo = new Svgo({
 })
 
 class ParseStage extends Stage {
-  constructor(parent, name, dependencies, searchPathFactory, sourceFactory, parsedName, onParse) {
+  constructor(parent, name, dependencies, searchPathFactory, sourceFactory, parsedName) {
     super(parent, name, dependencies)
     this.searchPathFactory = searchPathFactory
     this.sourceFactory = sourceFactory
     this.parsedName = parsedName
-    this.onParse = onParse
   }
 
   performStart() {
@@ -138,7 +137,7 @@ class ParseStage extends Stage {
           nextCharacterMustBeUpperCase = true
         }
 
-        const parsed = uglifyJs.minify(`var ${escapedName} = ${JSON.stringify(`data:image/svg+xml,${encodeURIComponent(result.data)}`)}`, {
+        const parsed = uglifyJs.minify(`var ${escapedName} = ${JSON.stringify(result.data)}`, {
           parse: {},
           compress: false,
           mangle: false,
@@ -148,7 +147,10 @@ class ParseStage extends Stage {
           }
         })
         this.handle(parsed.error, () => {
-          this.onParse(parsed.ast)
+          this.parsed = [{
+            name: this.parsedName,
+            contents: parsed.ast
+          }]
           this.done()
         })
       })
@@ -159,18 +161,23 @@ class InstanceStage extends GroupStage {
   constructor(parent, name, dependencies, searchPathFactory) {
     super(parent, name, dependencies)
     const readText = new ReadTextStage(this, `read`, [], () => [name])
-    new ParseStage(this, `parse`, [readText], searchPathFactory, () => readText.text, name, parsed => this.parent.parsed[this.name] = parsed)
+    this.parseStage = new ParseStage(this, `parse`, [readText], searchPathFactory, () => readText.text, name)
   }
 
-  stop() {
-    super.stop()
-    delete this.parent.parsed[this.name]
+  done() {
+    this.parsed = this.parseStage.parsed
+    super.done()
   }
 }
 
 export default class SvgParseStage extends FileSearchStage {
   constructor(parent, name, dependencies, cacheInstances, searchPathFactory) {
     super(parent, name, dependencies, cacheInstances, instance => new InstanceStage(this, instance, [], searchPathFactory), searchPathFactory, `svg`)
-    this.parsed = {}
+  }
+
+  done() {
+    this.parsed = []
+    this.children.forEach(child => child.parsed.forEach(parsed => this.parsed.push(parsed)))
+    super.done()
   }
 }
