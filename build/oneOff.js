@@ -7,8 +7,8 @@ recurse(
   `src`,
   () => run(
     paths,
-    () => console.log(`Done.`),
-    error => { throw error }
+    error => { throw error },
+    () => console.log(`Done.`)
   )
 )
 

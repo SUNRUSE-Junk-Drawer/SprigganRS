@@ -46,14 +46,14 @@ function invalidate() {
     invalidated = false
     run(
       JSON.parse(JSON.stringify(paths)),
+      error => console.error(`Failed; "${error}".`),
       () => {
         console.log(`Done.`)
         running = false
         if (invalidated) {
           invalidate()
         }
-      },
-      error => console.error(`Failed; "${error}".`)
+      }
     )
   }, 200)
 }

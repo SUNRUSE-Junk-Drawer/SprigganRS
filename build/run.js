@@ -1,4 +1,4 @@
-export default (paths, onSuccess, onDone) => {
+export default (paths, onError, onDone) => {
   normalizePaths(paths)
 
   console.log(`Running for files:`)
@@ -8,7 +8,7 @@ export default (paths, onSuccess, onDone) => {
 
   findGames(paths)
 
-  onSuccess()
+  onDone()
 }
 
 function normalizePaths(paths) {
