@@ -91,7 +91,7 @@ function findGames(paths) {
       .filter(path => !byMetadata.has(path))
   )
 
-  byOthers.forEach(game => console.warn(`Game "${game}" has no metadata.json file`))
+  byOthers.forEach(game => console.warn(`Game "${game}" has no metadata.json file.`))
 
   return byMetadata
 }
