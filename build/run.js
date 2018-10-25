@@ -1,14 +1,24 @@
+import mkdirp from "mkdirp"
+
 export default (paths, onError, onDone) => {
-  normalizePaths(paths)
+  console.log(`Ensuring "temp" exists...`)
+  mkdirp(`temp`, error => {
+    if (error) {
+      onError(error)
+      onDone()
+    } else {
+      normalizePaths(paths)
 
-  console.log(`Running for files:`)
-  Object
-    .keys(paths)
-    .forEach(key => console.log(`\t"${key}" @ ${paths[key]}`))
+      console.log(`Running for files:`)
+      Object
+        .keys(paths)
+        .forEach(key => console.log(`\t"${key}" @ ${paths[key]}`))
 
-  findGames(paths)
+      findGames(paths)
 
-  onDone()
+      onDone()
+    }
+  })
 }
 
 function normalizePaths(paths) {
