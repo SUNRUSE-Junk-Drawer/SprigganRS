@@ -46,12 +46,31 @@ export default (paths, tempPath, onError, onDone) => {
   function buildLoadedOrDeleted() {
     normalizePaths(paths)
 
-    console.log(`Running for files:`)
-    Object
+    const created = Object
       .keys(paths)
-      .forEach(key => console.log(`\t"${key}" @ ${paths[key]}`))
+      .filter(path => !Object.prototype.hasOwnProperty.call(state.paths, path))
+
+    console.log(`Created:`)
+    created.forEach(path => console.log(`\t${path}`))
+
+    const updated = Object
+      .keys(paths)
+      .filter(path => Object.prototype.hasOwnProperty.call(state.paths, path))
+      .filter(path => paths[path] != state.paths[path])
+
+    console.log(`Updated:`)
+    updated.forEach(path => console.log(`\t${path}`))
+
+    const deleted = Object
+      .keys(state.paths)
+      .filter(path => !Object.prototype.hasOwnProperty.call(paths, path))
+
+    console.log(`Deleted:`)
+    deleted.forEach(path => console.log(`\t${path}`))
 
     findGames(paths)
+
+    state.paths = paths
 
     console.log(`Writing "${statePath}" to mark build done...`)
     fs.writeFile(statePath, JSON.stringify(state), error => {
