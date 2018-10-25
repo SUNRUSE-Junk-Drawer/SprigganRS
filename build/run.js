@@ -6,6 +6,8 @@ export default (paths, onSuccess, onDone) => {
     .keys(paths)
     .forEach(key => console.log(`\t"${key}" @ ${paths[key]}`))
 
+  findGames(paths)
+
   onSuccess()
 }
 
@@ -17,4 +19,27 @@ function normalizePaths(paths) {
       delete paths[path]
       paths[path.replace(/\\/g, `/`)] = modified
     })
+}
+
+function findGames(paths) {
+  const byMetadata = new Set(
+    Object
+      .keys(paths)
+      .map(path => /^src\/games\/([^\/]+)\/metadata\.json$/i.exec(path))
+      .filter(match => match)
+      .map(match => match[1])
+  )
+
+  const byOthers = new Set(
+    Object
+      .keys(paths)
+      .map(path => /^src\/games\/([^\/]+)\/.*$/i.exec(path))
+      .filter(match => match)
+      .map(match => match[1])
+      .filter(path => !byMetadata.has(path))
+  )
+
+  byOthers.forEach(game => console.warn(`Game "${game}" has no metadata.json file`))
+
+  return byMetadata
 }
