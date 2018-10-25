@@ -7,6 +7,7 @@ recurse(
   `src`,
   () => run(
     paths,
+    path.join(`temp`, `oneOff`),
     error => { throw error },
     () => console.log(`Done.`)
   )
