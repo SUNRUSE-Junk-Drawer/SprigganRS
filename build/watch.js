@@ -1,4 +1,3 @@
-import * as path from "path"
 import * as chokidar from "chokidar"
 import run from "./run"
 
@@ -47,7 +46,7 @@ function invalidate() {
     invalidated = false
     run(
       JSON.parse(JSON.stringify(paths)),
-      path.join(`temp`, `watch`),
+      `watch`,
       error => console.error(`Failed; "${error}".`),
       () => {
         console.log(`Done.`)

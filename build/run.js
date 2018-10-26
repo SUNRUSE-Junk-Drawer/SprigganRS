@@ -3,7 +3,9 @@ import * as path from "path"
 import mkdirp from "mkdirp"
 import rimraf from "rimraf"
 
-export default (paths, tempPath, onError, onDone) => {
+export default (paths, buildName, onError, onDone) => {
+  const tempPath = path.join(`temp`, buildName)
+  const distPath = path.join(`dist`, buildName)
   const statePath = path.join(tempPath, `state.json`)
   console.log(`Checking for existing build ("${statePath}")...`)
 
