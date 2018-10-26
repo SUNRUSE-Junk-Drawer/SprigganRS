@@ -30,7 +30,16 @@ export function created(oldState, newState, buildName, gameName, onError, onDone
 
 export function updated(oldState, newState, buildName, gameName, onError, onDone) {
   console.log(`Updating game "${gameName}"...`)
-  onDone()
+
+  if (!Object.prototype.hasOwnProperty.call(newState.paths, metadataPath(gameName))) {
+    onError(`Game "${gameName}" does not appear to have a "metadata.json" file`)
+    onDone()
+  } else if (!Object.prototype.hasOwnProperty.call(newState.paths, iconPath(gameName))) {
+    onError(`Game "${gameName}" does not appear to have an "icon.svg" file`)
+    onDone()
+  } else {
+    onDone()
+  }
 }
 
 export function deleted(buildName, gameName, onError, onDone) {
@@ -56,6 +65,14 @@ function performDeletion(buildName, gameName, onError, onSuccess) {
       })
     }
   })
+}
+
+function metadataPath(gameName) {
+  return `src/games/${gameName}/metadata.json`
+}
+
+function iconPath(gameName) {
+  return `src/games/${gameName}/icon.svg`
 }
 
 function tempPath(buildName, gameName) {
