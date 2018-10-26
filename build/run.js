@@ -35,7 +35,29 @@ export default (paths, buildName, onError, onDone) => {
             onDone()
             return
           }
-          buildLoadedOrDeleted()
+          console.log(`Checking for a "${distPath}" directory...`)
+          fs.readdir(distPath, (error, files) => {
+            if (error && error.code != `ENOENT`) {
+              onError(error)
+              onDone()
+              return
+            } else if (error) {
+              console.log(`It does not exist.`)
+              buildLoadedOrDeleted()
+            } else if (!files.length) {
+              console.log(`It exists, but is empty; ignoring.`)
+              buildLoadedOrDeleted()
+            } else {
+              console.log(`It exists, and is not empty; deleting contents...`)
+              let remaining = files.length
+              files.forEach(file => rimraf(path.join(distPath, file), () => {
+                remaining--
+                if (!remaining) {
+                  buildLoadedOrDeleted()
+                }
+              }))
+            }
+          })
         })
       })
     } else {
