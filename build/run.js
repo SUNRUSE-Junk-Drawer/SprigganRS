@@ -2,6 +2,7 @@ import * as fs from "fs"
 import * as path from "path"
 import mkdirp from "mkdirp"
 import rimraf from "rimraf"
+import * as game from "./game"
 
 export default (paths, buildName, onError, onDone) => {
   const tempPath = path.join(`temp`, buildName)
@@ -9,7 +10,7 @@ export default (paths, buildName, onError, onDone) => {
   const statePath = path.join(tempPath, `state.json`)
   console.log(`Checking for existing build ("${statePath}")...`)
 
-  let state = {
+  let oldState = {
     paths: {}
   }
 
@@ -62,79 +63,72 @@ export default (paths, buildName, onError, onDone) => {
       })
     } else {
       console.log(`An existing build was found.`)
-      state = JSON.parse(data)
+      oldState = JSON.parse(data)
       buildLoadedOrDeleted()
     }
   })
 
   function buildLoadedOrDeleted() {
-    normalizePaths(paths)
-
-    const created = Object
+    Object
       .keys(paths)
-      .filter(path => !Object.prototype.hasOwnProperty.call(state.paths, path))
+      .forEach(path => {
+        const modified = paths[path]
+        delete paths[path]
+        paths[path.replace(/\\/g, `/`)] = modified
+      })
 
-    console.log(`Created:`)
-    created.forEach(path => console.log(`\t${path}`))
+    const newState = JSON.parse(JSON.stringify(oldState))
+    newState.paths = paths
 
-    const updated = Object
-      .keys(paths)
-      .filter(path => Object.prototype.hasOwnProperty.call(state.paths, path))
-      .filter(path => paths[path] != state.paths[path])
+    const oldGameNames = gameNames(oldState)
+    const newGameNames = gameNames(newState)
 
-    console.log(`Updated:`)
-    updated.forEach(path => console.log(`\t${path}`))
+    let remaining = new Set([...oldGameNames, ...newGameNames]).size
 
-    const deleted = Object
-      .keys(state.paths)
-      .filter(path => !Object.prototype.hasOwnProperty.call(paths, path))
+    if (remaining) {
+      Array
+        .from(newGameNames)
+        .filter(gameName => !oldGameNames.has(gameName))
+        .forEach(gameName => game.created(oldState, newState, buildName, gameName, onError, onGameDone))
 
-    console.log(`Deleted:`)
-    deleted.forEach(path => console.log(`\t${path}`))
+      Array
+        .from(newGameNames)
+        .filter(gameName => oldGameNames.has(gameName))
+        .forEach(gameName => game.updated(oldState, newState, buildName, gameName, onError, onGameDone))
 
-    findGames(paths)
+      Array
+        .from(oldGameNames)
+        .filter(gameName => !newGameNames.has(gameName))
+        .forEach(gameName => game.deleted(buildName, gameName, onError, onGameDone))
 
-    state.paths = paths
-
-    console.log(`Writing "${statePath}" to mark build done...`)
-    fs.writeFile(statePath, JSON.stringify(state), error => {
-      if (error) {
-        onError(error)
+      function onGameDone() {
+        remaining--
+        if (!remaining) {
+          onAllGamesDone()
+        }
       }
-      onDone()
-    })
+    } else {
+      onAllGamesDone()
+    }
+
+    function onAllGamesDone() {
+      console.log(`Writing "${statePath}" to mark build done...`)
+      fs.writeFile(statePath, JSON.stringify(newState), error => {
+        if (error) {
+          onError(error)
+        }
+        onDone()
+      })
+    }
   }
 }
 
-function normalizePaths(paths) {
-  Object
-    .keys(paths)
-    .forEach(path => {
-      const modified = paths[path]
-      delete paths[path]
-      paths[path.replace(/\\/g, `/`)] = modified
-    })
-}
-
-function findGames(paths) {
-  const byMetadata = new Set(
+function gameNames(state) {
+  return new Set(
     Object
-      .keys(paths)
-      .map(path => /^src\/games\/([^\/]+)\/metadata\.json$/i.exec(path))
-      .filter(match => match)
-      .map(match => match[1])
-  )
-
-  const byOthers = new Set(
-    Object
-      .keys(paths)
+      .keys(state.paths)
       .map(path => /^src\/games\/([^\/]+)\/.*$/i.exec(path))
       .filter(match => match)
       .map(match => match[1])
-      .filter(path => !byMetadata.has(path))
   )
-
-  byOthers.forEach(game => console.warn(`Game "${game}" has no metadata.json file.`))
-
-  return byMetadata
 }
