@@ -4,6 +4,8 @@ import mkdirp from "mkdirp"
 import rimraf from "rimraf"
 import * as game from "./game"
 
+const stateVersion = 0
+
 export default (paths, buildName, onError, onDone) => {
   const tempPath = path.join(`temp`, buildName)
   const distPath = path.join(`dist`, buildName)
@@ -11,6 +13,7 @@ export default (paths, buildName, onError, onDone) => {
   console.log(`Checking for existing build ("${statePath}")...`)
 
   let oldState = {
+    version: stateVersion,
     paths: {}
   }
 
@@ -22,7 +25,23 @@ export default (paths, buildName, onError, onDone) => {
     }
 
     if (error) {
-      console.log(`There is no existing build, or it was interrupted; erasing the "${tempPath}" directory if it exists...`)
+      console.log(`There is no existing build, or it was interrupted`)
+      eraseExistingBuild()
+    } else {
+      console.log(`An existing build was found.`)
+      const state = JSON.parse(data)
+      if (state.version == stateVersion) {
+        console.log(`Its version matches.`)
+        oldState = state
+        buildLoadedOrDeleted()
+      } else {
+        console.log(`Its version does not match.`)
+        eraseExistingBuild()
+      }
+    }
+
+    function eraseExistingBuild() {
+      console.log(`Erasing the "${tempPath}" directory if it exists...`)
       rimraf(tempPath, error => {
         if (error) {
           onError(error)
@@ -61,10 +80,6 @@ export default (paths, buildName, onError, onDone) => {
           })
         })
       })
-    } else {
-      console.log(`An existing build was found.`)
-      oldState = JSON.parse(data)
-      buildLoadedOrDeleted()
     }
   })
 
@@ -78,6 +93,7 @@ export default (paths, buildName, onError, onDone) => {
       })
 
     const newState = JSON.parse(JSON.stringify(oldState))
+    newState.version = stateVersion
     newState.paths = paths
 
     const oldGameNames = gameNames(oldState)
