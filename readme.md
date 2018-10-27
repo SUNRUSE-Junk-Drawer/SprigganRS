@@ -1,6 +1,8 @@
 # SprigganRS
 A "reactive" event-driven web game engine.
 
+Currently early in development.
+
 ## Architecture
 ```
                .-> video
