@@ -2,6 +2,7 @@ import * as fs from "fs"
 import * as path from "path"
 import mkdirp from "mkdirp"
 import rimraf from "rimraf"
+import generateHtml from "./generateHtml"
 
 export function created(oldState, newState, buildName, gameName, onError, onDone) {
   performDeletion(buildName, gameName, error => {
@@ -39,32 +40,70 @@ export function updated(oldState, newState, buildName, gameName, onError, onDone
     onError(`Game "${gameName}" does not appear to have an "icon.svg" file`)
     onDone()
   } else {
-    writeIfNotPresent(
-      path.join(tempPath(buildName, gameName), `tsconfig.json`),
-      onSuccess => onSuccess(JSON.stringify({
-        files: [
-          `index.ts`
-        ],
-        compilerOptions: {
-          allowJs: false,
-          allowUnreachableCode: false,
-          allowUnusedLabels: false,
-          noEmitOnError: true,
-          noImplicitAny: true,
-          strictNullChecks: true,
-          noImplicitReturns: true,
-          noUnusedLocals: true,
-          noFallthroughCasesInSwitch: true,
-          noImplicitThis: true,
-          outFile: "dist.js",
-          target: "es3"
-        }
-      })), error => {
+    const createdOrModifiedFiles = new Set(
+      Object
+        .keys(newState.paths)
+        .filter(path => (/^src\/games\/([^\/]+)\/.*$/.exec(path) || [])[1] == gameName)
+        .filter(path =>
+          !Object.prototype.hasOwnProperty.call(oldState.paths, path)
+          || oldState.paths[path] != newState.paths[path])
+    )
+    console.log(`Reading "${metadataPath(gameName)}"...`)
+    fs.readFile(metadataPath(gameName), (error, data) => {
+      if (error) {
         onError(error)
         onDone()
-      },
-      onDone
-    )
+      } else {
+        console.log(`Parsing...`)
+        let metadata
+        try {
+          metadata = JSON.parse(data)
+        } catch (error) {
+          onError(error)
+          onDone()
+          return
+        }
+        if (buildName == `watch`) {
+          metadata.name = `DEVELOPMENT BUILD - ${metadata.name}`
+        }
+        generateHtml(
+          createdOrModifiedFiles,
+          metadataPath(gameName),
+          metadata,
+          iconPath(gameName),
+          distPath(buildName, gameName),
+          error => {
+            onError(error)
+            onDone()
+          }, () => writeIfNotPresent(
+            path.join(tempPath(buildName, gameName), `tsconfig.json`),
+            onSuccess => onSuccess(JSON.stringify({
+              files: [
+                `index.ts`
+              ],
+              compilerOptions: {
+                allowJs: false,
+                allowUnreachableCode: false,
+                allowUnusedLabels: false,
+                noEmitOnError: true,
+                noImplicitAny: true,
+                strictNullChecks: true,
+                noImplicitReturns: true,
+                noUnusedLocals: true,
+                noFallthroughCasesInSwitch: true,
+                noImplicitThis: true,
+                outFile: "dist.js",
+                target: "es3"
+              }
+            })), error => {
+              onError(error)
+              onDone()
+            },
+            onDone
+          )
+        )
+      }
+    })
   }
 }
 
