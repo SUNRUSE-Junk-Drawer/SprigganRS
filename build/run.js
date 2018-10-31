@@ -4,7 +4,7 @@ import mkdirp from "mkdirp"
 import rimraf from "rimraf"
 import * as game from "./game"
 
-const stateVersion = 2
+const stateVersion = 3
 
 export default (paths, buildName, onError, onDone) => {
   const tempPath = path.join(`temp`, buildName)
