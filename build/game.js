@@ -68,6 +68,7 @@ export function updated(oldState, newState, buildName, gameName, onError, onDone
         }
         generateHtml(
           createdOrModifiedFiles,
+          buildName,
           metadataPath(gameName),
           metadata,
           iconPath(gameName),
