@@ -76,32 +76,7 @@ export function updated(oldState, newState, buildName, gameName, onError, onDone
           error => {
             onError(error)
             onDone()
-          }, () => writeIfNotPresent(
-            path.join(tempPath(buildName, gameName), `tsconfig.json`),
-            onSuccess => onSuccess(JSON.stringify({
-              files: [
-                `index.ts`
-              ],
-              compilerOptions: {
-                allowJs: false,
-                allowUnreachableCode: false,
-                allowUnusedLabels: false,
-                noEmitOnError: true,
-                noImplicitAny: true,
-                strictNullChecks: true,
-                noImplicitReturns: true,
-                noUnusedLocals: true,
-                noFallthroughCasesInSwitch: true,
-                noImplicitThis: true,
-                outFile: "dist.js",
-                target: "es3"
-              }
-            })), error => {
-              onError(error)
-              onDone()
-            },
-            onDone
-          )
+          }, onDone
         )
       }
     })
