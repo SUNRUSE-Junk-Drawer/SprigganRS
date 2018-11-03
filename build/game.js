@@ -108,28 +108,3 @@ function performDeletion(buildName, gameName, onError, onSuccess) {
     }
   })
 }
-
-function writeIfNotPresent(path, contentFactory, onError, onSuccess) {
-  console.log(`Checking whether "${path}" exists...`)
-  fs.access(path, error => {
-    if (error && error.code == `ENOENT`) {
-      console.log(`It does not exist; generating...`)
-      contentFactory(content => {
-        console.log(`Writing...`)
-        fs.writeFile(path, content, error => {
-          if (error) {
-            onError(error)
-          } else {
-            console.log(`Done.`)
-            onSuccess()
-          }
-        })
-      })
-    } else if (error) {
-      onError(error)
-    } else {
-      console.log(`It exists.  Continuing...`)
-      onSuccess()
-    }
-  })
-}
