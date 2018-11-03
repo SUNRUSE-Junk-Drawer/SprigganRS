@@ -8,29 +8,24 @@ export function created(oldState, newState, buildName, gameName, onError, onDone
   newState.games[gameName] = {
     packages: {}
   }
-  performDeletion(buildName, gameName, error => {
-    onError(error)
-    onDone()
-  }, afterDeletion)
-  function afterDeletion() {
-    console.log(`Recreating "${paths.tempBuildGame(buildName, gameName)}"...`)
-    mkdirp(paths.tempBuildGame(buildName, gameName), error => {
-      if (error) {
-        onError(error)
-        onDone()
-      } else {
-        console.log(`Recreating "${paths.distBuildGame(buildName, gameName)}"...`)
-        mkdirp(paths.distBuildGame(buildName, gameName), error => {
-          if (error) {
-            onError(error)
-            onDone()
-          } else {
-            updated(oldState, newState, buildName, gameName, onError, onDone)
-          }
-        })
-      }
-    })
-  }
+
+  console.log(`Creating "${paths.tempBuildGame(buildName, gameName)}"...`)
+  mkdirp(paths.tempBuildGame(buildName, gameName), error => {
+    if (error) {
+      onError(error)
+      onDone()
+    } else {
+      console.log(`Creating "${paths.distBuildGame(buildName, gameName)}"...`)
+      mkdirp(paths.distBuildGame(buildName, gameName), error => {
+        if (error) {
+          onError(error)
+          onDone()
+        } else {
+          updated(oldState, newState, buildName, gameName, onError, onDone)
+        }
+      })
+    }
+  })
 }
 
 export function updated(oldState, newState, buildName, gameName, onError, onDone) {
@@ -85,24 +80,18 @@ export function updated(oldState, newState, buildName, gameName, onError, onDone
 }
 
 export function deleted(buildName, gameName, onError, onDone) {
-  performDeletion(buildName, gameName, error => {
-    onError(error)
-    onDone()
-  }, onDone)
-}
-
-function performDeletion(buildName, gameName, onError, onSuccess) {
-  console.log(`Deleting "${paths.tempBuildGame(buildName, gameName)}"...`)
   rimraf(paths.tempBuildGame(buildName, gameName), error => {
     if (error) {
       onError(error)
+      onDone()
     } else {
       console.log(`Deleting "${paths.distBuildGame(buildName, gameName)}"...`)
       rimraf(paths.distBuildGame(buildName, gameName), error => {
         if (error) {
           onError(error)
+          onDone()
         } else {
-          onSuccess()
+          onDone()
         }
       })
     }
