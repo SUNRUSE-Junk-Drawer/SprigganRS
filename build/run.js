@@ -25,16 +25,24 @@ export default (allPaths, buildName, onError, onDone) => {
       console.log(`There is no existing build, or it was interrupted`)
       eraseExistingBuild()
     } else {
-      console.log(`An existing build was found.`)
-      const state = JSON.parse(data)
-      if (state.version == stateVersion) {
-        console.log(`Its version matches.`)
-        oldState = state
-        buildLoadedOrDeleted()
-      } else {
-        console.log(`Its version does not match.`)
-        eraseExistingBuild()
-      }
+      console.log(`An existing build was found.  Deleting the state file to mark the build as started...`)
+      fs.unlink(paths.tempBuildState(buildName), err => {
+        if (err) {
+          onError(err)
+          onDone()
+          return
+        }
+
+        const state = JSON.parse(data)
+        if (state.version == stateVersion) {
+          console.log(`Its version matches.`)
+          oldState = state
+          buildLoadedOrDeleted()
+        } else {
+          console.log(`Its version does not match.`)
+          eraseExistingBuild()
+        }
+      })
     }
 
     function eraseExistingBuild() {
