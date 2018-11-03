@@ -149,8 +149,7 @@ function gameNames(state) {
   return new Set(
     Object
       .keys(state.paths)
-      .map(path => /^src\/games\/([^\/]+)\/.*$/i.exec(path))
+      .map(paths.isSrcGame)
       .filter(match => match)
-      .map(match => match[1])
   )
 }

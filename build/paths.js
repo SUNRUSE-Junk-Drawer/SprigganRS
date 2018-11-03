@@ -6,10 +6,20 @@ export const join = (...fragments) => fragments
   .filter(fragment => fragment)
   .join(`/`)
 
+const is = (regex, path) => {
+  const match = regex.exec(path)
+  if (match) {
+    return match[1]
+  } else {
+    return null
+  }
+}
+
 export const src = `src`
 export const temp = `temp`
 export const dist = `dist`
 export const srcGame = gameName => join(src, `games`, gameName)
+export const isSrcGame = path => is(/^src\/games\/([^\/]+)\/.*$/i, path)
 export const srcGameFile = (gameName, fileName) => join(srcGame(gameName), fileName)
 export const srcGameMetadata = gameName => srcGameFile(gameName, `metadata.json`)
 export const srcGameIcon = gameName => srcGameFile(gameName, `icon.svg`)
