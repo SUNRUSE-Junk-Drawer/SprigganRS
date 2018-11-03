@@ -40,42 +40,61 @@ export default function (createdOrModifiedFiles, buildName, gameName, metadata, 
         onError(error)
       } else {
         const files = response.images.concat(response.files)
-        const totalFiles = files.length
-        takeNextFile()
+        let compressed = 0
+        let written = 0
+        const total = files.length
+        let failed = false
 
-        function takeNextFile() {
-          if (files.length) {
-            const file = files.shift()
-            if (buildName == `oneOff` && isPng(file.contents)) {
-              console.log(`Compressing favicon file "${file.name}"... (${totalFiles - files.length}/${totalFiles})`)
-              execBuffer({
-                input: file.contents,
-                bin: pngcrushBin,
-                args: [`-brute`, `-force`, `-q`, `-reduce`, execBuffer.input, execBuffer.output]
-              })
-                .catch(onError)
-                .then(compressed => {
-                  file.contents = compressed
-                  writeFile()
-                })
-            } else {
-              writeFile()
-            }
-            function writeFile() {
-              console.log(`Writing favicon file "${file.name}"... (${totalFiles - files.length}/${totalFiles})`)
-              fs.writeFile(
-                paths.distBuildGameFile(buildName, gameName, file.name),
-                file.contents,
-                err => {
-                  if (err) {
-                    onError(err)
-                  } else {
-                    takeNextFile()
-                  }
+        files.forEach(file => {
+          if (buildName == `oneOff` && isPng(file.contents)) {
+            console.log(`Compressing favicon file "${file.name}"...`)
+            execBuffer({
+              input: file.contents,
+              bin: pngcrushBin,
+              args: [`-brute`, `-force`, `-q`, `-reduce`, execBuffer.input, execBuffer.output]
+            })
+              .catch(() => {
+                if (failed) {
+                  return
                 }
-              )
-            }
+                failed = true
+                onError()
+              })
+              .then(compressed => {
+                if (failed) {
+                  return
+                }
+                file.contents = compressed
+                writeFile()
+              })
           } else {
+            writeFile()
+          }
+          function writeFile() {
+            console.log(`Writing favicon file "${file.name}" (compressed ${++compressed}/written ${written}/total ${total})...`)
+            fs.writeFile(
+              paths.distBuildGameFile(buildName, gameName, file.name),
+              file.contents,
+              err => {
+                if (failed) {
+                  return
+                }
+                if (err) {
+                  onError(err)
+                } else {
+                  console.log(`Written favicon file "${file.name}" (compressed ${compressed}/written ${++written}/total ${total}).`)
+                  checkDone()
+                }
+              }
+            )
+          }
+        })
+
+        checkDone()
+
+        function checkDone() {
+          if (written == total) {
+            console.log(`All files written.`)
             let html = `<!DOCTYPE html>
               <html>
                 <head>
