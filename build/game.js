@@ -3,6 +3,7 @@ import mkdirp from "mkdirp"
 import rimraf from "rimraf"
 import * as paths from "./paths"
 import generateHtml from "./generateHtml"
+import * as _package from "./_package"
 
 export function created(oldState, newState, buildName, gameName, onError, onDone) {
   newState.games[gameName] = {
@@ -64,16 +65,50 @@ export function updated(oldState, newState, buildName, gameName, onError, onDone
         if (buildName == `watch`) {
           metadata.name = `DEVELOPMENT BUILD - ${metadata.name}`
         }
-        generateHtml(
-          createdOrModifiedFiles,
-          buildName,
-          gameName,
-          metadata,
-          error => {
-            onError(error)
-            onDone()
-          }, onDone
-        )
+
+        const oldPackageNames = packageNames(oldState, gameName)
+        const newPackageNames = packageNames(newState, gameName)
+
+        let remaining = new Set([...oldPackageNames, ...newPackageNames]).size
+
+        if (remaining) {
+          Array
+            .from(newPackageNames)
+            .filter(packageName => !oldPackageNames.has(packageName))
+            .forEach(packageName => _package.created(oldState, newState, buildName, gameName, packageName, onError, onPackageDone))
+
+          Array
+            .from(newPackageNames)
+            .filter(packageName => oldPackageNames.has(packageName))
+            .forEach(packageName => _package.updated(oldState, newState, buildName, gameName, packageName, onError, onPackageDone))
+
+          Array
+            .from(oldPackageNames)
+            .filter(packageName => !newPackageNames.has(packageName))
+            .forEach(packageName => _package.deleted(buildName, gameName, packageName, onError, onPackageDone))
+
+          function onPackageDone() {
+            remaining--
+            if (!remaining) {
+              onAllPackagesDone()
+            }
+          }
+        } else {
+          onAllPackagesDone()
+        }
+
+        function onAllPackagesDone() {
+          generateHtml(
+            createdOrModifiedFiles,
+            buildName,
+            gameName,
+            metadata,
+            error => {
+              onError(error)
+              onDone()
+            }, onDone
+          )
+        }
       }
     })
   }
@@ -96,4 +131,14 @@ export function deleted(buildName, gameName, onError, onDone) {
       })
     }
   })
+}
+
+function packageNames(state, gameName) {
+  return new Set(
+    Object
+      .keys(state.paths)
+      .filter(path => paths.isSrcGame(path) == gameName)
+      .map(paths.isSrcGamePackage)
+      .filter(packageName => packageName)
+  )
 }
