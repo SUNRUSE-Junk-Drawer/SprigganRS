@@ -48,8 +48,9 @@ The coordinate space is a number of "units" wide (X) and tall (Y) (defined in th
         |'- metadata.json
         |'- icon.svg
         |'- index.ts
-         '- (package name)
-            '- (**/*.svg)
+         '- packages
+            '- (package name)
+               '- (**/*.svg)
 ```
 
 ### dist/(game name).zip
@@ -137,7 +138,7 @@ The number of units the "safe zone" is "tall" (see Coordinate Space).
 An icon to use; shown as a favicon, splash screen and when "pinned" to the home
 screen of a mobile devce.  Expected to be square.
 
-### src/games/(game name)/(package name)
+### src/games/(game name)/packages/(package name)
 
 Each folder forms a "package", which is a collection of content which is loaded
 as a unit.
@@ -182,7 +183,7 @@ a slash inside a folder:
 | `fonts\default\/` | fonts | default | /   |
 | `fonts\default\\` | fonts | default | \   |
 
-### src/games/(game name)/(package name)**/*.svg
+### src/games/(game name)/package/(package name)**/*.svg
 
 If an Inkscape SVG with multiple layers is  found, it is split into one piece of
 content per layer and their names are included in their file names; a file with
