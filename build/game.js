@@ -115,6 +115,7 @@ export function updated(oldState, newState, buildName, gameName, onError, onDone
 }
 
 export function deleted(buildName, gameName, onError, onDone) {
+  console.log(`Deleting "${paths.tempBuildGame(buildName, gameName)}"...`)
   rimraf(paths.tempBuildGame(buildName, gameName), error => {
     if (error) {
       onError(error)
