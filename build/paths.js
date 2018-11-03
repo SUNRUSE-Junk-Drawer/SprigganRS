@@ -19,11 +19,11 @@ export const src = `src`
 export const temp = `temp`
 export const dist = `dist`
 export const srcGame = gameName => join(src, `games`, gameName)
-export const isSrcGame = path => is(/^src\/games\/([^\/]+)\/.*$/i, path)
+export const isSrcGame = path => is(/^src\/games\/([^\/]+)\/.+$/i, path)
 export const srcGameFile = (gameName, fileName) => join(srcGame(gameName), fileName)
 export const srcGameMetadata = gameName => srcGameFile(gameName, `metadata.json`)
 export const srcGameIcon = gameName => srcGameFile(gameName, `icon.svg`)
-export const isSrcGamePackage = path => is(/^src\/games\/[^\/]+\/packages\/([^\/]+)\/.*$/i, path)
+export const isSrcGamePackage = path => is(/^src\/games\/[^\/]+\/packages\/([^\/]+)\/.+$/i, path)
 export const tempBuild = buildName => join(temp, buildName)
 export const tempBuildState = buildName => join(tempBuild(buildName), `state.json`)
 export const tempBuildGame = (buildName, gameName) => join(tempBuild(buildName), `games`, gameName)
