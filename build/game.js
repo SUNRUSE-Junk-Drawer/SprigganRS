@@ -5,6 +5,9 @@ import * as paths from "./paths"
 import generateHtml from "./generateHtml"
 
 export function created(oldState, newState, buildName, gameName, onError, onDone) {
+  newState.games[gameName] = {
+    packages: {}
+  }
   performDeletion(buildName, gameName, error => {
     onError(error)
     onDone()
