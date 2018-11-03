@@ -1,13 +1,12 @@
-import * as path from "path"
 import * as chokidar from "chokidar"
 import mkdirp from "mkdirp"
 import newExpress from "express"
 import * as express from "express"
+import * as paths from "./paths"
 import run from "./run"
 
-const distPath = path.join(`dist`, `watch`)
-console.log(`Creating "${distPath}" if it does not exist...`)
-mkdirp(distPath, error => {
+console.log(`Creating "${paths.distBuild(`watch`)}" if it does not exist...`)
+mkdirp(paths.distBuild(`watch`), error => {
   if (error) {
     throw error
   }
@@ -15,14 +14,14 @@ mkdirp(distPath, error => {
   console.log(`Starting web server on port 5000...`)
 
   newExpress()
-    .use(express.static(distPath))
+    .use(express.static(paths.distBuild(`watch`)))
     .listen(5000, () => {
       console.log(`Watching for files...`)
 
       let running = false
       let invalidated = false
       let throttling = null
-      const paths = {}
+      const allPaths = {}
 
       chokidar
         .watch(`src`)
@@ -30,7 +29,7 @@ mkdirp(distPath, error => {
         .on(`change`, (path, stats) => handle(`change`, path, stats))
         .on(`unlink`, path => {
           console.log(`"unlink" of "${path}"`)
-          delete paths[path]
+          delete allPaths[path]
           invalidate()
         })
         .on(`error`, error => { throw error })
@@ -40,7 +39,7 @@ mkdirp(distPath, error => {
         if (!stats) {
           throw `No stats for "${event}" of "${path}"`
         }
-        paths[path] = stats.mtime.getTime()
+        allPaths[path] = stats.mtime.getTime()
         invalidate()
       }
 
@@ -63,7 +62,7 @@ mkdirp(distPath, error => {
           throttling = null
           invalidated = false
           run(
-            JSON.parse(JSON.stringify(paths)),
+            JSON.parse(JSON.stringify(allPaths)),
             `watch`,
             error => console.error(`Failed; "${error}".`),
             () => {

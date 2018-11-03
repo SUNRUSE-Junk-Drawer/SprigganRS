@@ -1,7 +1,7 @@
 import * as fs from "fs"
-import * as path from "path"
 import mkdirp from "mkdirp"
 import rimraf from "rimraf"
+import * as paths from "./paths"
 import generateHtml from "./generateHtml"
 
 export function created(oldState, newState, buildName, gameName, onError, onDone) {
@@ -10,14 +10,14 @@ export function created(oldState, newState, buildName, gameName, onError, onDone
     onDone()
   }, afterDeletion)
   function afterDeletion() {
-    console.log(`Recreating "${tempPath(buildName, gameName)}"...`)
-    mkdirp(tempPath(buildName, gameName), error => {
+    console.log(`Recreating "${paths.tempBuildGame(buildName, gameName)}"...`)
+    mkdirp(paths.tempBuildGame(buildName, gameName), error => {
       if (error) {
         onError(error)
         onDone()
       } else {
-        console.log(`Recreating "${distPath(buildName, gameName)}"...`)
-        mkdirp(distPath(buildName, gameName), error => {
+        console.log(`Recreating "${paths.distBuildGame(buildName, gameName)}"...`)
+        mkdirp(paths.distBuildGame(buildName, gameName), error => {
           if (error) {
             onError(error)
             onDone()
@@ -33,10 +33,10 @@ export function created(oldState, newState, buildName, gameName, onError, onDone
 export function updated(oldState, newState, buildName, gameName, onError, onDone) {
   console.log(`Updating game "${gameName}"...`)
 
-  if (!Object.prototype.hasOwnProperty.call(newState.paths, metadataPath(gameName))) {
+  if (!Object.prototype.hasOwnProperty.call(newState.paths, paths.srcGameMetadata(gameName))) {
     onError(`Game "${gameName}" does not appear to have a "metadata.json" file`)
     onDone()
-  } else if (!Object.prototype.hasOwnProperty.call(newState.paths, iconPath(gameName))) {
+  } else if (!Object.prototype.hasOwnProperty.call(newState.paths, paths.srcGameIcon(gameName))) {
     onError(`Game "${gameName}" does not appear to have an "icon.svg" file`)
     onDone()
   } else {
@@ -48,8 +48,8 @@ export function updated(oldState, newState, buildName, gameName, onError, onDone
           !Object.prototype.hasOwnProperty.call(oldState.paths, path)
           || oldState.paths[path] != newState.paths[path])
     )
-    console.log(`Reading "${metadataPath(gameName)}"...`)
-    fs.readFile(metadataPath(gameName), (error, data) => {
+    console.log(`Reading "${paths.srcGameMetadata(gameName)}"...`)
+    fs.readFile(paths.srcGameMetadata(gameName), (error, data) => {
       if (error) {
         onError(error)
         onDone()
@@ -69,10 +69,8 @@ export function updated(oldState, newState, buildName, gameName, onError, onDone
         generateHtml(
           createdOrModifiedFiles,
           buildName,
-          metadataPath(gameName),
+          gameName,
           metadata,
-          iconPath(gameName),
-          distPath(buildName, gameName),
           error => {
             onError(error)
             onDone()
@@ -91,13 +89,13 @@ export function deleted(buildName, gameName, onError, onDone) {
 }
 
 function performDeletion(buildName, gameName, onError, onSuccess) {
-  console.log(`Deleting "${tempPath(buildName, gameName)}"...`)
-  rimraf(tempPath(buildName, gameName), error => {
+  console.log(`Deleting "${paths.tempBuildGame(buildName, gameName)}"...`)
+  rimraf(paths.tempBuildGame(buildName, gameName), error => {
     if (error) {
       onError(error)
     } else {
-      console.log(`Deleting "${distPath(buildName, gameName)}"...`)
-      rimraf(distPath(buildName, gameName), error => {
+      console.log(`Deleting "${paths.distBuildGame(buildName, gameName)}"...`)
+      rimraf(paths.distBuildGame(buildName, gameName), error => {
         if (error) {
           onError(error)
         } else {
@@ -106,22 +104,6 @@ function performDeletion(buildName, gameName, onError, onSuccess) {
       })
     }
   })
-}
-
-function metadataPath(gameName) {
-  return `src/games/${gameName}/metadata.json`
-}
-
-function iconPath(gameName) {
-  return `src/games/${gameName}/icon.svg`
-}
-
-function tempPath(buildName, gameName) {
-  return path.join(`temp`, buildName, gameName)
-}
-
-function distPath(buildName, gameName) {
-  return path.join(`dist`, buildName, gameName)
 }
 
 function writeIfNotPresent(path, contentFactory, onError, onSuccess) {

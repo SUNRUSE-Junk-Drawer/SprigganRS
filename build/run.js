@@ -1,23 +1,20 @@
 import * as fs from "fs"
-import * as path from "path"
 import mkdirp from "mkdirp"
 import rimraf from "rimraf"
+import * as paths from "./paths"
 import * as game from "./game"
 
-const stateVersion = 4
+const stateVersion = 5
 
-export default (paths, buildName, onError, onDone) => {
-  const tempPath = path.join(`temp`, buildName)
-  const distPath = path.join(`dist`, buildName)
-  const statePath = path.join(tempPath, `state.json`)
-  console.log(`Checking for existing build ("${statePath}")...`)
+export default (allPaths, buildName, onError, onDone) => {
+  console.log(`Checking for existing build ("${paths.tempBuildState(buildName)}")...`)
 
   let oldState = {
     version: stateVersion,
     paths: {}
   }
 
-  fs.readFile(statePath, { encoding: `utf8` }, (error, data) => {
+  fs.readFile(paths.tempBuildState(buildName), { encoding: `utf8` }, (error, data) => {
     if (error && error.code != `ENOENT`) {
       onError(error)
       onDone()
@@ -41,22 +38,22 @@ export default (paths, buildName, onError, onDone) => {
     }
 
     function eraseExistingBuild() {
-      console.log(`Erasing the "${tempPath}" directory if it exists...`)
-      rimraf(tempPath, error => {
+      console.log(`Erasing the "${paths.tempBuild(buildName)}" directory if it exists...`)
+      rimraf(paths.tempBuild(buildName), error => {
         if (error) {
           onError(error)
           onDone()
           return
         }
         console.log(`Recreating...`)
-        mkdirp(tempPath, error => {
+        mkdirp(paths.tempBuild(buildName), error => {
           if (error) {
             onError(error)
             onDone()
             return
           }
-          console.log(`Checking for a "${distPath}" directory...`)
-          fs.readdir(distPath, (error, files) => {
+          console.log(`Checking for a "${paths.distBuild(buildName)}" directory...`)
+          fs.readdir(paths.distBuild(buildName), (error, files) => {
             if (error && error.code != `ENOENT`) {
               onError(error)
               onDone()
@@ -70,7 +67,7 @@ export default (paths, buildName, onError, onDone) => {
             } else {
               console.log(`It exists, and is not empty; deleting contents...`)
               let remaining = files.length
-              files.forEach(file => rimraf(path.join(distPath, file), () => {
+              files.forEach(file => rimraf(paths.join(paths.distBuild(buildName), file), () => {
                 remaining--
                 if (!remaining) {
                   buildLoadedOrDeleted()
@@ -85,16 +82,16 @@ export default (paths, buildName, onError, onDone) => {
 
   function buildLoadedOrDeleted() {
     Object
-      .keys(paths)
+      .keys(allPaths)
       .forEach(path => {
-        const modified = paths[path]
-        delete paths[path]
-        paths[path.replace(/\\/g, `/`)] = modified
+        const modified = allPaths[path]
+        delete allPaths[path]
+        allPaths[paths.join(path)] = modified
       })
 
     const newState = JSON.parse(JSON.stringify(oldState))
     newState.version = stateVersion
-    newState.paths = paths
+    newState.paths = allPaths
 
     const oldGameNames = gameNames(oldState)
     const newGameNames = gameNames(newState)
@@ -128,8 +125,8 @@ export default (paths, buildName, onError, onDone) => {
     }
 
     function onAllGamesDone() {
-      console.log(`Writing "${statePath}" to mark build done...`)
-      fs.writeFile(statePath, JSON.stringify(newState), error => {
+      console.log(`Writing "${paths.tempBuildState(buildName)}" to mark build done...`)
+      fs.writeFile(paths.tempBuildState(buildName), JSON.stringify(newState), error => {
         if (error) {
           onError(error)
         }

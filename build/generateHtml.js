@@ -1,16 +1,16 @@
 import * as fs from "fs"
-import * as path from "path"
 import favicons from "favicons"
 import isPng from "is-png"
 import pngcrushBin from "pngcrush-bin"
 import execBuffer from "exec-buffer"
 import htmlMinifier from "html-minifier"
+import * as paths from "./paths"
 
-export default function (createdOrModifiedFiles, buildName, metadataPath, metadata, iconPath, distPath, onError, onSuccess) {
-  if (createdOrModifiedFiles.has(metadataPath)
-    || createdOrModifiedFiles.has(iconPath)) {
+export default function (createdOrModifiedFiles, buildName, gameName, metadata, onError, onSuccess) {
+  if (createdOrModifiedFiles.has(paths.srcGameMetadata(gameName))
+    || createdOrModifiedFiles.has(paths.srcGameIcon(gameName))) {
     console.log(`Generating favicons...`)
-    favicons(iconPath, {
+    favicons(paths.srcGameIcon(gameName), {
       appName: metadata.name,
       appDescription: metadata.description,
       developerName: metadata.developer.name,
@@ -64,7 +64,7 @@ export default function (createdOrModifiedFiles, buildName, metadataPath, metada
             function writeFile() {
               console.log(`Writing favicon file "${file.name}"... (${totalFiles - files.length}/${totalFiles})`)
               fs.writeFile(
-                path.join(distPath, file.name),
+                paths.distBuildGameFile(buildName, gameName, file.name),
                 file.contents,
                 err => {
                   if (err) {
@@ -136,10 +136,9 @@ export default function (createdOrModifiedFiles, buildName, metadataPath, metada
                 useShortDoctype: true
               })
             }
-            const htmlPath = path.join(distPath, `index.html`)
-            console.log(`Writing "${htmlPath}"...`)
+            console.log(`Writing "${paths.distBuildGameHtml(buildName, gameName)}"...`)
             fs.writeFile(
-              htmlPath,
+              paths.distBuildGameHtml(buildName, gameName),
               html,
               error => {
                 if (error) {

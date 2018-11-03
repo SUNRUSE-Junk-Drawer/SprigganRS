@@ -1,12 +1,12 @@
 import * as fs from "fs"
-import * as path from "path"
+import * as paths from "./paths"
 import run from "./run"
 
-const paths = {}
+const allPaths = {}
 recurse(
   `src`,
   () => run(
-    paths,
+    allPaths,
     `oneOff`,
     error => { throw error },
     () => console.log(`Done.`)
@@ -20,13 +20,13 @@ function recurse(directory, onSuccess) {
     }
     let remaining = files.length
     files
-      .map(file => path.join(directory, file))
+      .map(file => paths.join(directory, file))
       .forEach(file => fs.stat(file, (error, stats) => {
         if (error) {
           throw error
         }
         if (stats.isFile()) {
-          paths[file] = stats.mtime.getTime()
+          allPaths[file] = stats.mtime.getTime()
           fileDone()
         } else if (stats.isDirectory()) {
           recurse(file, fileDone)
