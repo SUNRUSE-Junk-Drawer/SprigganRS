@@ -4,15 +4,14 @@ import rimraf from "rimraf"
 import * as paths from "./paths"
 import * as game from "./game"
 
-const stateVersion = 6
+const stateVersion = 7
 
 export default (allPaths, buildName, onError, onDone) => {
   console.log(`Checking for existing build ("${paths.tempBuildState(buildName)}")...`)
 
   let oldState = {
     version: stateVersion,
-    paths: {},
-    games: {}
+    paths: {}
   }
 
   fs.readFile(paths.tempBuildState(buildName), { encoding: `utf8` }, (error, data) => {

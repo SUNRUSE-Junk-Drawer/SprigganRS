@@ -6,10 +6,6 @@ import generateHtml from "./generateHtml"
 import * as _package from "./_package"
 
 export function created(oldState, newState, buildName, gameName, onError, onDone) {
-  newState.games[gameName] = {
-    packages: {}
-  }
-
   console.log(`Creating "${paths.tempBuildGame(buildName, gameName)}"...`)
   mkdirp(paths.tempBuildGame(buildName, gameName), error => {
     if (error) {
