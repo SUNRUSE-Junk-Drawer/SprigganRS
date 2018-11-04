@@ -3,7 +3,7 @@ import rimraf from "rimraf"
 import * as paths from "./paths"
 
 export function created(oldState, newState, buildName, gameName, packageName, onError, onDone) {
-  console.log(`Creating "${paths.tempBuildGamePackage(buildName, gameName, packageName)}...`)
+  console.log(`Creating "${paths.tempBuildGamePackage(buildName, gameName, packageName)}"...`)
   mkdirp(paths.tempBuildGamePackage(buildName, gameName, packageName), err => {
     if (err) {
       onError(err)
