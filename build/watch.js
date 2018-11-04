@@ -61,6 +61,7 @@ mkdirp(paths.distBuild(`watch`), error => {
           console.log(`Starting...`)
           throttling = null
           invalidated = false
+          running = true
           run(
             JSON.parse(JSON.stringify(allPaths)),
             `watch`,
