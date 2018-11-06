@@ -117,8 +117,16 @@ export default function (oldState, newState, buildName, gameName, packageName, f
               .elements
               .find(element => element.type == `element` && element.name == `svg`)
               .elements = sharedBetweenLayers.concat([layer])
+
+            let name = paths.join(fileName, layer.attributes[`inkscape:label`])
+            if (layer.attributes[`inkscape:label`] == `/` || layer.attributes[`inkscape:label`].endsWith(`//`)) {
+              name += `//`
+            } else if (layer.attributes[`inkscape:label`] == `\\` || layer.attributes[`inkscape:label`].endsWith(`/\\`)) {
+              name += `/\\`
+            }
+
             effectiveLayers.push({
-              name: paths.join(fileName, layer.attributes[`inkscape:label`]),
+              name,
               xml: layerXml
             })
           })
