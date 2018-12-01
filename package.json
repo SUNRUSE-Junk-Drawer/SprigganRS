@@ -22,7 +22,7 @@
     "html-minifier": "3.5.21",
     "is-png": "1.1.0",
     "mkdirp": "0.5.1",
-    "pngcrush-bin": "3.1.1",
+    "pngcrush-bin": "4.0.0",
     "recursive-readdir": "2.2.2",
     "rimraf": "2.6.2",
     "svgo": "1.1.1",
