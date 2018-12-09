@@ -92,7 +92,7 @@ const svgoInstance = new svgo({
 export default async function (
   oldState: types.state,
   newState: types.state,
-  buildName: string,
+  buildName: types.buildName,
   gameName: string,
   packageName: string,
   fileName: string

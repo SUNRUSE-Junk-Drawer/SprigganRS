@@ -4,3 +4,5 @@ export interface state {
     [path: string]: number
   }
 }
+
+export type buildName = `oneOff` | `watch`

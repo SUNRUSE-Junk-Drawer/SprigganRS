@@ -10,13 +10,14 @@ const isPng = require(`is-png`)
 const pngcrushBin = require(`pngcrush-bin`)
 const execBuffer = require(`exec-buffer`)
 import * as htmlMinifier from "html-minifier"
+import * as types from "./types"
 import * as paths from "./paths"
 
 const fsWriteFile = util.promisify(fs.writeFile)
 
 export default async function (
   createdOrModifiedFiles: Set<string>,
-  buildName: string,
+  buildName: types.buildName,
   gameName: string,
   metadata: {
     name: string

@@ -14,7 +14,7 @@ const extensions: {
   readonly [extension: string]: (
     oldState: types.state,
     newState: types.state,
-    buildName: string,
+    buildName: types.buildName,
     gameName: string,
     packageName: string,
     fileName: string
@@ -31,7 +31,7 @@ const extensions: {
 export async function created(
   oldState: types.state,
   newState: types.state,
-  buildName: string,
+  buildName: types.buildName,
   gameName: string,
   packageName: string,
   fileName: string,
@@ -43,7 +43,7 @@ export async function created(
 export async function updated(
   oldState: types.state,
   newState: types.state,
-  buildName: string,
+  buildName: types.buildName,
   gameName: string,
   packageName: string,
   fileName: string,
@@ -54,7 +54,7 @@ export async function updated(
 }
 
 export async function deleted(
-  buildName: string,
+  buildName: types.buildName,
   gameName: string,
   packageName: string,
   fileName: string,
@@ -64,7 +64,7 @@ export async function deleted(
 }
 
 async function performDeletion(
-  buildName: string,
+  buildName: types.buildName,
   gameName: string,
   packageName: string,
   fileName: string,
@@ -77,7 +77,7 @@ async function performDeletion(
 async function performCreation(
   oldState: types.state,
   newState: types.state,
-  buildName: string,
+  buildName: types.buildName,
   gameName: string,
   packageName: string,
   fileName: string,

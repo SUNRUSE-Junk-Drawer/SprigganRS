@@ -17,7 +17,7 @@ const stateVersion = 8
 
 export default async (
   allPaths: { [path: string]: number },
-  buildName: string
+  buildName: types.buildName
 ): Promise<void> => {
   console.log(`Checking for existing build ("${paths.tempBuildState(buildName)}")...`)
 

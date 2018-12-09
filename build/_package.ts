@@ -14,7 +14,7 @@ const rimrafPromisified = util.promisify(rimraf)
 export async function created(
   oldState: types.state,
   newState: types.state,
-  buildName: string,
+  buildName: types.buildName,
   gameName: string,
   packageName: string
 ): Promise<void> {
@@ -26,7 +26,7 @@ export async function created(
 export async function updated(
   oldState: types.state,
   newState: types.state,
-  buildName: string,
+  buildName: types.buildName,
   gameName: string,
   packageName: string
 ): Promise<void> {
@@ -217,7 +217,7 @@ export async function updated(
 }
 
 export async function deleted(
-  buildName: string,
+  buildName: types.buildName,
   gameName: string,
   packageName: string
 ): Promise<void> {
