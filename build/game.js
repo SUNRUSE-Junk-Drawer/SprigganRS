@@ -43,6 +43,13 @@ export function updated(oldState, newState, buildName, gameName, onError, onDone
           !Object.prototype.hasOwnProperty.call(oldState.paths, path)
           || oldState.paths[path] != newState.paths[path])
     )
+    const deletedFiles = new Set(
+      Object
+        .keys(oldState.paths)
+        .filter(path => (/^src\/games\/([^\/]+)\/.*$/.exec(path) || [])[1] == gameName)
+        .filter(path => !Object.prototype.hasOwnProperty.call(newState.paths, path))
+    )
+    const changedFiles = new Set([...createdOrModifiedFiles, ...deletedFiles])
     console.log(`Reading "${paths.srcGameMetadata(gameName)}"...`)
     fs.readFile(paths.srcGameMetadata(gameName), (error, data) => {
       if (error) {
@@ -65,23 +72,25 @@ export function updated(oldState, newState, buildName, gameName, onError, onDone
         const oldPackageNames = packageNames(oldState, gameName)
         const newPackageNames = packageNames(newState, gameName)
 
-        let remaining = new Set([...oldPackageNames, ...newPackageNames]).size
+        const createdPackages = Array
+          .from(newPackageNames)
+          .filter(packageName => !oldPackageNames.has(packageName))
+
+        const updatedPackages = Array
+          .from(newPackageNames)
+          .filter(packageName => oldPackageNames.has(packageName))
+          .filter(packageName => Array.from(changedFiles).map(paths.isSrcGamePackage).includes(packageName))
+
+        const deletedPackages = Array
+          .from(oldPackageNames)
+          .filter(packageName => !newPackageNames.has(packageName))
+
+        let remaining = createdPackages.length + updatedPackages.length + deletedPackages.length
 
         if (remaining) {
-          Array
-            .from(newPackageNames)
-            .filter(packageName => !oldPackageNames.has(packageName))
-            .forEach(packageName => _package.created(oldState, newState, buildName, gameName, packageName, onError, onPackageDone))
-
-          Array
-            .from(newPackageNames)
-            .filter(packageName => oldPackageNames.has(packageName))
-            .forEach(packageName => _package.updated(oldState, newState, buildName, gameName, packageName, onError, onPackageDone))
-
-          Array
-            .from(oldPackageNames)
-            .filter(packageName => !newPackageNames.has(packageName))
-            .forEach(packageName => _package.deleted(buildName, gameName, packageName, onError, onPackageDone))
+          createdPackages.forEach(packageName => _package.created(oldState, newState, buildName, gameName, packageName, onError, onPackageDone))
+          updatedPackages.forEach(packageName => _package.updated(oldState, newState, buildName, gameName, packageName, onError, onPackageDone))
+          deletedPackages.forEach(packageName => _package.deleted(buildName, gameName, packageName, onError, onPackageDone))
 
           function onPackageDone() {
             remaining--
