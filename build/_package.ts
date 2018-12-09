@@ -2,6 +2,7 @@ import * as util from "util"
 import * as fs from "fs"
 import * as mkdirp from "mkdirp"
 import * as rimraf from "rimraf"
+import * as types from "./types"
 import * as paths from "./paths"
 import * as file from "./file"
 
@@ -11,16 +12,8 @@ const mkdirpPromisified = util.promisify(mkdirp)
 const rimrafPromisified = util.promisify(rimraf)
 
 export async function created(
-  oldState: {
-    readonly paths: {
-      readonly [path: string]: number
-    }
-  },
-  newState: {
-    readonly paths: {
-      readonly [path: string]: number
-    }
-  },
+  oldState: types.state,
+  newState: types.state,
   buildName: string,
   gameName: string,
   packageName: string
@@ -31,16 +24,8 @@ export async function created(
 }
 
 export async function updated(
-  oldState: {
-    readonly paths: {
-      readonly [path: string]: number
-    }
-  },
-  newState: {
-    readonly paths: {
-      readonly [path: string]: number
-    }
-  },
+  oldState: types.state,
+  newState: types.state,
   buildName: string,
   gameName: string,
   packageName: string
@@ -244,11 +229,7 @@ export async function deleted(
 }
 
 function fileNames(
-  state: {
-    readonly paths: {
-      readonly [path: string]: number
-    }
-  },
+  state: types.state,
   gameName: string,
   packageName: string
 ): Set<string> {

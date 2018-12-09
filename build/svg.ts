@@ -2,6 +2,7 @@ import * as util from "util"
 import * as fs from "fs"
 import * as xmlJs from "xml-js"
 import * as svgo from "svgo"
+import * as types from "./types"
 import * as paths from "./paths"
 
 const fsReadFile = util.promisify(fs.readFile)
@@ -89,16 +90,8 @@ const svgoInstance = new svgo({
 })
 
 export default async function (
-  oldState: {
-    readonly paths: {
-      readonly [path: string]: number
-    }
-  },
-  newState: {
-    readonly paths: {
-      readonly [path: string]: number
-    }
-  },
+  oldState: types.state,
+  newState: types.state,
   buildName: string,
   gameName: string,
   packageName: string,

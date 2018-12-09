@@ -2,6 +2,7 @@ import * as util from "util"
 import * as fs from "fs"
 import * as mkdirp from "mkdirp"
 import * as rimraf from "rimraf"
+import * as types from "./types"
 import * as paths from "./paths"
 import svg from "./svg"
 
@@ -11,16 +12,8 @@ const rimrafPromisified = util.promisify(rimraf)
 
 const extensions: {
   readonly [extension: string]: (
-    oldState: {
-      readonly paths: {
-        readonly [path: string]: number
-      }
-    },
-    newState: {
-      readonly paths: {
-        readonly [path: string]: number
-      }
-    },
+    oldState: types.state,
+    newState: types.state,
     buildName: string,
     gameName: string,
     packageName: string,
@@ -36,16 +29,8 @@ const extensions: {
 }
 
 export async function created(
-  oldState: {
-    readonly paths: {
-      readonly [path: string]: number
-    }
-  },
-  newState: {
-    readonly paths: {
-      readonly [path: string]: number
-    }
-  },
+  oldState: types.state,
+  newState: types.state,
   buildName: string,
   gameName: string,
   packageName: string,
@@ -56,16 +41,8 @@ export async function created(
 }
 
 export async function updated(
-  oldState: {
-    readonly paths: {
-      readonly [path: string]: number
-    }
-  },
-  newState: {
-    readonly paths: {
-      readonly [path: string]: number
-    }
-  },
+  oldState: types.state,
+  newState: types.state,
   buildName: string,
   gameName: string,
   packageName: string,
@@ -98,16 +75,8 @@ async function performDeletion(
 }
 
 async function performCreation(
-  oldState: {
-    readonly paths: {
-      readonly [path: string]: number
-    }
-  },
-  newState: {
-    readonly paths: {
-      readonly [path: string]: number
-    }
-  },
+  oldState: types.state,
+  newState: types.state,
   buildName: string,
   gameName: string,
   packageName: string,

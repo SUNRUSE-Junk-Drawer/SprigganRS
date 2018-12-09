@@ -2,6 +2,7 @@ import * as util from "util"
 import * as fs from "fs"
 import * as mkdirp from "mkdirp"
 import * as rimraf from "rimraf"
+import * as types from "./types"
 import * as paths from "./paths"
 import * as game from "./game"
 
@@ -20,7 +21,7 @@ export default async (
 ): Promise<void> => {
   console.log(`Checking for existing build ("${paths.tempBuildState(buildName)}")...`)
 
-  let oldState = {
+  let oldState: types.state = {
     version: stateVersion,
     paths: {}
   }
@@ -119,11 +120,7 @@ export default async (
   }
 }
 
-function gameNames(state: {
-  readonly paths: {
-    readonly [path: string]: number
-  }
-}): Set<string> {
+function gameNames(state: types.state): Set<string> {
   return new Set<string>(
     Object
       .keys(state.paths)
