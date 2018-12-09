@@ -144,7 +144,7 @@ export async function updated(
   await rimrafPromisified(paths.tempBuildGamePackageCode(buildName, gameName, packageName))
   console.log(`Writing "${paths.distBuildGamePackage(buildName, gameName, packageName)}"...`)
   interface recursedDataArray extends Array<recursedData> { }
-  type recursedData = string | {
+  type recursedData = [number, number] | {
     readonly [key: string]: recursedData
   } | recursedDataArray
   function recurseData(
@@ -152,7 +152,7 @@ export async function updated(
   ): recursedData {
     switch (pointer.type) {
       case `file`:
-        return pointer.code
+        return pointer.data
       case `directory`:
         const asArray = checkIfArray(pointer.children)
         if (asArray) {
