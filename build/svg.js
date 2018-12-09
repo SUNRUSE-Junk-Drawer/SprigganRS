@@ -119,9 +119,13 @@ export default function (oldState, newState, buildName, gameName, packageName, f
               .elements = sharedBetweenLayers.concat([layer])
 
             let name = paths.join(fileName, layer.attributes[`inkscape:label`])
-            if (layer.attributes[`inkscape:label`] == `/` || layer.attributes[`inkscape:label`].endsWith(`//`)) {
+            if (layer.attributes[`inkscape:label`] == `/`
+              || layer.attributes[`inkscape:label`].endsWith(`\\/`)
+              || layer.attributes[`inkscape:label`].endsWith(`//`)) {
               name += `//`
-            } else if (layer.attributes[`inkscape:label`] == `\\` || layer.attributes[`inkscape:label`].endsWith(`/\\`)) {
+            } else if (layer.attributes[`inkscape:label`] == `\\`
+              || layer.attributes[`inkscape:label`].endsWith(`\\\\`)
+              || layer.attributes[`inkscape:label`].endsWith(`/\\`)) {
               name += `/\\`
             }
 
