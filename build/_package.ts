@@ -1,10 +1,26 @@
 import * as fs from "fs"
-import mkdirp from "mkdirp"
-import rimraf from "rimraf"
+import * as mkdirp from "mkdirp"
+import * as rimraf from "rimraf"
 import * as paths from "./paths"
 import * as file from "./file"
 
-export function created(oldState, newState, buildName, gameName, packageName, onError, onDone) {
+export function created(
+  oldState: {
+    readonly paths: {
+      readonly [path: string]: number
+    }
+  },
+  newState: {
+    readonly paths: {
+      readonly [path: string]: number
+    }
+  },
+  buildName: string,
+  gameName: string,
+  packageName: string,
+  onError: (error: any) => void,
+  onDone: () => void
+): void {
   console.log(`Creating "${paths.tempBuildGamePackage(buildName, gameName, packageName)}"...`)
   mkdirp(paths.tempBuildGamePackage(buildName, gameName, packageName), err => {
     if (err) {
@@ -16,7 +32,23 @@ export function created(oldState, newState, buildName, gameName, packageName, on
   })
 }
 
-export function updated(oldState, newState, buildName, gameName, packageName, onError, onDone) {
+export function updated(
+  oldState: {
+    readonly paths: {
+      readonly [path: string]: number
+    }
+  },
+  newState: {
+    readonly paths: {
+      readonly [path: string]: number
+    }
+  },
+  buildName: string,
+  gameName: string,
+  packageName: string,
+  onError: (error: any) => void,
+  onDone: () => void
+): void {
   console.log(`Updating package "${packageName}"...`)
 
   const oldFileNames = fileNames(oldState, gameName, packageName)
@@ -43,8 +75,22 @@ export function updated(oldState, newState, buildName, gameName, packageName, on
   function onFileDone() {
     remaining--
 
-    const allCode = {}
-    const allData = {}
+    type collectedDirectory = {
+      readonly type: `directory`
+      readonly children: {
+        [name: string]: collected
+      }
+    }
+    type collectedFile = {
+      readonly type: `file`
+      readonly code: string
+      readonly data: [number, number]
+    }
+    type collected = collectedDirectory | collectedFile
+    const root: collectedDirectory = {
+      type: `directory`,
+      children: {}
+    }
 
     if (!remaining) {
       console.log(`Collecting files in package "${packageName}"...`)
@@ -58,7 +104,7 @@ export function updated(oldState, newState, buildName, gameName, packageName, on
         (err, data) => {
           if (err) {
             onError(err)
-            onColected()
+            onCollected()
           } else {
             const parsed = JSON.parse(data)
             for (const key in parsed) {
@@ -67,21 +113,21 @@ export function updated(oldState, newState, buildName, gameName, packageName, on
                 keys.length -= 2
                 keys.push(`/`)
               }
-              let codePointer = allCode
-              let dataPointer = allData
+
+              let pointer: collectedDirectory = root
               while (true) {
-                if (Object.prototype.hasOwnProperty.call(codePointer, keys[0])) {
+                if (Object.prototype.hasOwnProperty.call(pointer, keys[0])) {
                   let failed = false
-                  switch (typeof codePointer[keys[0]]) {
-                    case `object`:
+                  const newPointer = pointer.children[keys[0]]
+                  switch (newPointer.type) {
+                    case `directory`:
                       if (keys.length > 1) {
-                        codePointer = codePointer[keys[0]]
-                        dataPointer = dataPointer[keys[0]]
+                        pointer = newPointer
                       } else {
                         onError(`"${key}" is the name of both a piece of content and an object containing content in package "${packageName}"`)
                       }
                       break
-                    case `string`:
+                    case `file`:
                       if (keys.length > 1) {
                         onError(`"${key}" is the name of both an object containing content and a piece of content in package "${packageName}"`)
                         failed = true
@@ -95,11 +141,18 @@ export function updated(oldState, newState, buildName, gameName, packageName, on
                   }
                 } else {
                   if (keys.length > 1) {
-                    codePointer = codePointer[keys[0]] = {}
-                    dataPointer = dataPointer[keys[0]] = {}
+                    const newDirectory: collectedDirectory = {
+                      type: `directory`,
+                      children: {}
+                    }
+                    pointer.children[keys[0]] = newDirectory
+                    pointer = newDirectory
                   } else {
-                    codePointer[keys[0]] = parsed[key].code
-                    dataPointer[keys[0]] = [concatenatedData.length, parsed[key].data.length]
+                    pointer.children[keys[0]] = {
+                      type: `file`,
+                      code: parsed[key].code,
+                      data: [concatenatedData.length, parsed[key].data.length]
+                    }
                     concatenatedData += parsed[key].data
                   }
                 }
@@ -127,44 +180,70 @@ export function updated(oldState, newState, buildName, gameName, packageName, on
               onDone()
             } else {
               console.log(`Writing "${paths.distBuildGamePackage(buildName, gameName, packageName)}"...`)
+              interface recursedDataArray extends Array<recursedData> { }
+              type recursedData = string | {
+                readonly [key: string]: recursedData
+              } | recursedDataArray
+              function recurseData(
+                pointer: collected
+              ): recursedData {
+                switch (pointer.type) {
+                  case `file`:
+                    return pointer.code
+                  case `directory`:
+                    const asArray = checkIfArray(pointer.children)
+                    if (asArray) {
+                      return asArray.map(recurseData)
+                    } else {
+                      const output: { [key: string]: recursedData } = {}
+                      for (const key in pointer.children) {
+                        output[key] = recurseData(pointer.children[key])
+                      }
+                      return output
+                    }
+                }
+              }
               fs.writeFile(
                 paths.distBuildGamePackage(buildName, gameName, packageName),
-                `${JSON.stringify(allData)}\n${concatenatedData}`,
+                `${JSON.stringify(recurseData(root))}\n${concatenatedData}`,
                 err => {
                   if (err) {
                     onError(err)
                     onDone()
                   } else {
                     console.log(`Writing "${paths.tempBuildGamePackageCode(buildName, gameName, packageName)}"...`)
-                    function recurseCode(codePointer, indents) {
-                      switch (typeof codePointer) {
-                        case `string`:
-                          return codePointer
-                        case `object`:
-                          const asArray = checkIfArray(codePointer)
+                    function recurseCode(
+                      pointer: collected,
+                      indents: number
+                    ): string {
+                      switch (pointer.type) {
+                        case `file`:
+                          return pointer.code
+                        case `directory`:
+                          const asArray = checkIfArray(pointer)
                           if (asArray) {
                             let output = `[`
                             let first = true
-                            for (const key in codePointer) {
+                            for (const key in pointer.children) {
                               if (first) {
                                 first = false
                               } else {
                                 output += `,`
                               }
-                              output += `\n${`\t`.repeat(indents + 1)}${recurseCode(codePointer[key], indents + 1)}`
+                              output += `\n${`\t`.repeat(indents + 1)}${recurseCode(pointer.children[key], indents + 1)}`
                             }
                             output += `\n${`\t`.repeat(indents)}]`
                             return output
                           } else {
                             let output = `{`
                             let first = true
-                            for (const key in codePointer) {
+                            for (const key in pointer.children) {
                               if (first) {
                                 first = false
                               } else {
                                 output += `,`
                               }
-                              output += `\n${`\t`.repeat(indents + 1)}readonly ${JSON.stringify(key)}: ${recurseCode(codePointer[key], indents + 1)}`
+                              output += `\n${`\t`.repeat(indents + 1)}readonly ${JSON.stringify(key)}: ${recurseCode(pointer.children[key], indents + 1)}`
                             }
                             output += `\n${`\t`.repeat(indents)}}`
                             return output
@@ -174,7 +253,7 @@ export function updated(oldState, newState, buildName, gameName, packageName, on
 
                     fs.writeFile(
                       paths.tempBuildGamePackageCode(buildName, gameName, packageName),
-                      `type ${packageName} = ${recurseCode(allCode)}`,
+                      `type ${packageName} = ${recurseCode(root, 0)}`,
                       err => {
                         if (err) {
                           onError(err)
@@ -195,7 +274,13 @@ export function updated(oldState, newState, buildName, gameName, packageName, on
   }
 }
 
-export function deleted(buildName, gameName, packageName, onError, onDone) {
+export function deleted(
+  buildName: string,
+  gameName: string,
+  packageName: string,
+  onError: (error: any) => void,
+  onDone: () => void
+): void {
   console.log(`Deleting "${paths.tempBuildGamePackage(buildName, gameName, packageName)}"...`)
   rimraf(paths.tempBuildGamePackage(buildName, gameName, packageName), error => {
     if (error) {
@@ -215,7 +300,15 @@ export function deleted(buildName, gameName, packageName, onError, onDone) {
   })
 }
 
-function fileNames(state, gameName, packageName) {
+function fileNames(
+  state: {
+    readonly paths: {
+      readonly [path: string]: number
+    }
+  },
+  gameName: string,
+  packageName: string
+): Set<string> {
   return new Set(
     Object
       .keys(state.paths)
@@ -224,8 +317,8 @@ function fileNames(state, gameName, packageName) {
   )
 }
 
-function checkIfArray(object) {
-  const output = []
+function checkIfArray<T>(object: { readonly [key: string]: T }): null | T[] {
+  const output: T[] = []
   while (true) {
     if (!Object.prototype.hasOwnProperty.call(object, output.length)) {
       break

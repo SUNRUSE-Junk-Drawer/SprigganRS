@@ -1,12 +1,17 @@
 import * as fs from "fs"
-import mkdirp from "mkdirp"
-import rimraf from "rimraf"
+import * as mkdirp from "mkdirp"
+import * as rimraf from "rimraf"
 import * as paths from "./paths"
 import * as game from "./game"
 
 const stateVersion = 8
 
-export default (allPaths, buildName, onError, onDone) => {
+export default (
+  allPaths: { [path: string]: number },
+  buildName: string,
+  onError: (error: any) => void,
+  onDone: () => void
+): void => {
   console.log(`Checking for existing build ("${paths.tempBuildState(buildName)}")...`)
 
   let oldState = {
@@ -144,11 +149,15 @@ export default (allPaths, buildName, onError, onDone) => {
   }
 }
 
-function gameNames(state) {
-  return new Set(
+function gameNames(state: {
+  readonly paths: {
+    readonly [path: string]: number
+  }
+}): Set<string> {
+  return new Set<string>(
     Object
       .keys(state.paths)
       .map(paths.isSrcGame)
-      .filter(match => match)
+      .filter((match: null | string): match is string => !!match)
   )
 }

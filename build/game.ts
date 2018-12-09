@@ -1,11 +1,26 @@
 import * as fs from "fs"
-import mkdirp from "mkdirp"
-import rimraf from "rimraf"
+import * as mkdirp from "mkdirp"
+import * as rimraf from "rimraf"
 import * as paths from "./paths"
 import generateHtml from "./generateHtml"
 import * as _package from "./_package"
 
-export function created(oldState, newState, buildName, gameName, onError, onDone) {
+export function created(
+  oldState: {
+    readonly paths: {
+      readonly [path: string]: number
+    }
+  },
+  newState: {
+    readonly paths: {
+      readonly [path: string]: number
+    }
+  },
+  buildName: string,
+  gameName: string,
+  onError: (error: any) => void,
+  onDone: () => void
+): void {
   console.log(`Creating "${paths.tempBuildGame(buildName, gameName)}"...`)
   mkdirp(paths.tempBuildGame(buildName, gameName), error => {
     if (error) {
@@ -25,7 +40,22 @@ export function created(oldState, newState, buildName, gameName, onError, onDone
   })
 }
 
-export function updated(oldState, newState, buildName, gameName, onError, onDone) {
+export function updated(
+  oldState: {
+    readonly paths: {
+      readonly [path: string]: number
+    }
+  },
+  newState: {
+    readonly paths: {
+      readonly [path: string]: number
+    }
+  },
+  buildName: string,
+  gameName: string,
+  onError: (error: any) => void,
+  onDone: () => void
+) {
   console.log(`Updating game "${gameName}"...`)
 
   if (!Object.prototype.hasOwnProperty.call(newState.paths, paths.srcGameMetadata(gameName))) {
@@ -51,20 +81,33 @@ export function updated(oldState, newState, buildName, gameName, onError, onDone
     )
     const changedFiles = new Set([...createdOrModifiedFiles, ...deletedFiles])
     console.log(`Reading "${paths.srcGameMetadata(gameName)}"...`)
-    fs.readFile(paths.srcGameMetadata(gameName), (error, data) => {
+    fs.readFile(paths.srcGameMetadata(gameName), { encoding: `utf8` }, (error: any, data: string) => {
       if (error) {
         onError(error)
         onDone()
       } else {
         console.log(`Parsing...`)
-        let metadata
+        let possibleMetadata: null | {
+          name: string
+          readonly description: string
+          readonly developer: {
+            readonly name: string
+            readonly url: string
+          }
+          readonly width: number
+          readonly height: number
+        }
         try {
-          metadata = JSON.parse(data)
+          possibleMetadata = JSON.parse(data)
+          if (!possibleMetadata) {
+            throw new Error(`The metadata file contained "null".`)
+          }
         } catch (error) {
           onError(error)
           onDone()
           return
         }
+        const metadata = possibleMetadata
         if (buildName == `watch`) {
           metadata.name = `DEVELOPMENT BUILD - ${metadata.name}`
         }
@@ -108,7 +151,7 @@ export function updated(oldState, newState, buildName, gameName, onError, onDone
             buildName,
             gameName,
             metadata,
-            error => {
+            (error: any): void => {
               onError(error)
               onDone()
             }, onDone
@@ -119,7 +162,11 @@ export function updated(oldState, newState, buildName, gameName, onError, onDone
   }
 }
 
-export function deleted(buildName, gameName, onError, onDone) {
+export function deleted(
+  buildName: string,
+  gameName: string,
+  onError: (error: any) => void,
+  onDone: () => void): void {
   console.log(`Deleting "${paths.tempBuildGame(buildName, gameName)}"...`)
   rimraf(paths.tempBuildGame(buildName, gameName), error => {
     if (error) {
@@ -139,12 +186,19 @@ export function deleted(buildName, gameName, onError, onDone) {
   })
 }
 
-function packageNames(state, gameName) {
+function packageNames(
+  state: {
+    readonly paths: {
+      readonly [path: string]: number
+    }
+  },
+  gameName: string
+): Set<string> {
   return new Set(
     Object
       .keys(state.paths)
       .filter(path => paths.isSrcGame(path) == gameName)
       .map(paths.isSrcGamePackage)
-      .filter(packageName => packageName)
+      .filter((packageName: null | string): packageName is string => !!packageName)
   )
 }

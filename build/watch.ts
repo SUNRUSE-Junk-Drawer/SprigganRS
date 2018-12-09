@@ -1,6 +1,6 @@
+import * as fs from "fs"
 import * as chokidar from "chokidar"
-import mkdirp from "mkdirp"
-import newExpress from "express"
+import * as mkdirp from "mkdirp"
 import * as express from "express"
 import * as paths from "./paths"
 import run from "./run"
@@ -13,15 +13,15 @@ mkdirp(paths.distBuild(`watch`), error => {
 
   console.log(`Starting web server on port 5000...`)
 
-  newExpress()
+  express()
     .use(express.static(paths.distBuild(`watch`)))
     .listen(5000, () => {
       console.log(`Watching for files...`)
 
       let running = false
       let invalidated = false
-      let throttling = null
-      const allPaths = {}
+      let throttling: null | NodeJS.Timer = null
+      const allPaths: { [path: string]: number } = {}
 
       chokidar
         .watch(`src`)
@@ -34,7 +34,7 @@ mkdirp(paths.distBuild(`watch`), error => {
         })
         .on(`error`, error => { throw error })
 
-      function handle(event, path, stats) {
+      function handle(event: string, path: string, stats: fs.Stats) {
         console.log(`"${event}" of "${path}"`)
         if (!stats) {
           throw `No stats for "${event}" of "${path}"`
