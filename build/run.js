@@ -4,7 +4,7 @@ import rimraf from "rimraf"
 import * as paths from "./paths"
 import * as game from "./game"
 
-const stateVersion = 7
+const stateVersion = 8
 
 export default (allPaths, buildName, onError, onDone) => {
   console.log(`Checking for existing build ("${paths.tempBuildState(buildName)}")...`)

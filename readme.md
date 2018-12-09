@@ -39,7 +39,7 @@ The coordinate space is a number of "units" wide (X) and tall (Y) (defined in th
 |    '- (game name)
 |       |'- index.html
 |       |'- index.js
-|        '- (package name)-(audio format).json
+|        '- (package name)-(audio format).txt
  '- src
     |'- engine
     |   |'- header/index.ts
