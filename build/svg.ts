@@ -216,9 +216,14 @@ export default async function (
     }
 
     const value = await svgoInstance.optimize(xmlJs.js2xml(layer.xml))
+    const optimized = xmlJs.xml2js(value.data) as xmlJs.Element
+    escapeAttributes(optimized)
+    if (!optimized.elements) {
+      throw new Error(`This should never happen, and is required by Typescript.`)
+    }
     generated[layer.name] = {
       code: `engineSvg`,
-      data: value.data
+      data: optimized.elements.map(element => xmlJs.js2xml(element)).join(``)
     }
   }
 
