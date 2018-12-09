@@ -98,7 +98,7 @@ export async function updated(
 
       let pointer: collectedDirectory = root
       while (true) {
-        if (Object.prototype.hasOwnProperty.call(pointer, keys[0])) {
+        if (Object.prototype.hasOwnProperty.call(pointer.children, keys[0])) {
           const newPointer = pointer.children[keys[0]]
           switch (newPointer.type) {
             case `directory`:
