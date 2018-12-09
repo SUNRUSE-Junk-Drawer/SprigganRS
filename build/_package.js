@@ -22,23 +22,23 @@ export function updated(oldState, newState, buildName, gameName, packageName, on
   const oldFileNames = fileNames(oldState, gameName, packageName)
   const newFileNames = fileNames(newState, gameName, packageName)
 
-  let remaining = new Set([...oldFileNames, ...newFileNames]).size
-
-  Array
+  const createdFiles = Array
     .from(newFileNames)
     .filter(fileName => !oldFileNames.has(fileName))
-    .forEach(fileName => file.created(oldState, newState, buildName, gameName, packageName, paths.extractSrcGamePackageFileName(fileName), paths.extractSrcGamePackageFileExtension(fileName), onError, onFileDone))
 
-  Array
+  const updatedFiles = Array
     .from(newFileNames)
     .filter(fileName => oldFileNames.has(fileName))
     .filter(fileName => newState.paths[fileName] != oldState.paths[fileName])
-    .forEach(fileName => file.updated(oldState, newState, buildName, gameName, packageName, paths.extractSrcGamePackageFileName(fileName), paths.extractSrcGamePackageFileExtension(fileName), onError, onFileDone))
 
-  Array
+  const deletedFiles = Array
     .from(oldFileNames)
     .filter(fileName => !newFileNames.has(fileName))
-    .forEach(fileName => file.deleted(buildName, gameName, packageName, paths.extractSrcGamePackageFileName(fileName), paths.extractSrcGamePackageFileExtension(fileName), onError, onFileDone))
+
+  createdFiles.forEach(fileName => file.created(oldState, newState, buildName, gameName, packageName, paths.extractSrcGamePackageFileName(fileName), paths.extractSrcGamePackageFileExtension(fileName), onError, onFileDone))
+  updatedFiles.forEach(fileName => file.updated(oldState, newState, buildName, gameName, packageName, paths.extractSrcGamePackageFileName(fileName), paths.extractSrcGamePackageFileExtension(fileName), onError, onFileDone))
+  deletedFiles.forEach(fileName => file.deleted(buildName, gameName, packageName, paths.extractSrcGamePackageFileName(fileName), paths.extractSrcGamePackageFileExtension(fileName), onError, onFileDone))
+  let remaining = createdFiles.length + updatedFiles.length + deletedFiles.length
 
   function onFileDone() {
     remaining--
