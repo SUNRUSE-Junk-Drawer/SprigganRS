@@ -1,3 +1,4 @@
+import * as util from "util"
 import * as fs from "fs"
 import * as chokidar from "chokidar"
 import * as mkdirp from "mkdirp"
@@ -5,11 +6,16 @@ import * as express from "express"
 import * as paths from "./paths"
 import run from "./run"
 
-console.log(`Creating "${paths.distBuild(`watch`)}" if it does not exist...`)
-mkdirp(paths.distBuild(`watch`), error => {
-  if (error) {
-    throw error
-  }
+const mkdirpPromisified = util.promisify(mkdirp)
+
+program().then(
+  () => console.log(`Stopped.`),
+  (error: any) => { throw error }
+)
+
+async function program(): Promise<void> {
+  console.log(`Creating "${paths.distBuild(`watch`)}" if it does not exist...`)
+  await mkdirpPromisified(paths.distBuild(`watch`))
 
   console.log(`Starting web server on port 5000...`)
 
@@ -64,10 +70,17 @@ mkdirp(paths.distBuild(`watch`), error => {
           running = true
           run(
             JSON.parse(JSON.stringify(allPaths)),
-            `watch`,
-            error => console.error(`Failed; "${error}".`),
+            `watch`
+          ).then(
             () => {
               console.log(`Done.`)
+              running = false
+              if (invalidated) {
+                invalidate()
+              }
+            },
+            error => {
+              console.error(`Failed; "${error}".`)
               running = false
               if (invalidated) {
                 invalidate()
@@ -77,4 +90,4 @@ mkdirp(paths.distBuild(`watch`), error => {
         }, 200)
       }
     })
-})
+}

@@ -1,17 +1,23 @@
+import * as util from "util"
 import * as fs from "fs"
 import * as mkdirp from "mkdirp"
 import * as rimraf from "rimraf"
 import * as paths from "./paths"
 import * as game from "./game"
 
+const fsReadFile = util.promisify(fs.readFile)
+const fsWriteFile = util.promisify(fs.writeFile)
+const fsUnlink = util.promisify(fs.unlink)
+const fsReaddir = util.promisify(fs.readdir)
+const mkdirpPromisified = util.promisify(mkdirp)
+const rimrafPromisified = util.promisify(rimraf)
+
 const stateVersion = 8
 
-export default (
+export default async (
   allPaths: { [path: string]: number },
-  buildName: string,
-  onError: (error: any) => void,
-  onDone: () => void
-): void => {
+  buildName: string
+): Promise<void> => {
   console.log(`Checking for existing build ("${paths.tempBuildState(buildName)}")...`)
 
   let oldState = {
@@ -19,81 +25,62 @@ export default (
     paths: {}
   }
 
-  fs.readFile(paths.tempBuildState(buildName), { encoding: `utf8` }, (error, data) => {
-    if (error && error.code != `ENOENT`) {
-      onError(error)
-      onDone()
+  let data: string
+  try {
+    data = await fsReadFile(paths.tempBuildState(buildName), { encoding: `utf8` })
+  } catch (e) {
+    if (e.code != `ENOENT`) {
+      throw e
+    }
+    console.log(`There is no existing build, or it was interrupted`)
+    await eraseExistingBuild()
+    return
+  }
+  console.log(`An existing build was found.  Deleting the state file to mark the build as started...`)
+  await fsUnlink(paths.tempBuildState(buildName))
+  const state = JSON.parse(data)
+  if (state.version == stateVersion) {
+    console.log(`Its version matches.`)
+    oldState = state
+    await buildLoadedOrDeleted()
+  } else {
+    console.log(`Its version does not match.`)
+    await eraseExistingBuild()
+  }
+
+  async function eraseExistingBuild(): Promise<void> {
+    console.log(`Erasing the "${paths.tempBuild(buildName)}" directory if it exists...`)
+    await rimrafPromisified(paths.tempBuild(buildName))
+
+    console.log(`Recreating...`)
+    await mkdirpPromisified(paths.tempBuild(buildName))
+
+    console.log(`Checking for a "${paths.distBuild(buildName)}" directory...`)
+    let files: null | string[] = null
+    try {
+      files = await fsReaddir(paths.distBuild(buildName))
+    } catch (e) {
+      if (e.code != `ENOENT`) {
+        throw e
+      }
+      console.log(`It does not exist.`)
+      await buildLoadedOrDeleted()
       return
     }
 
-    if (error) {
-      console.log(`There is no existing build, or it was interrupted`)
-      eraseExistingBuild()
+    if (!files.length) {
+      console.log(`It exists, but is empty; ignoring.`)
+      await buildLoadedOrDeleted()
     } else {
-      console.log(`An existing build was found.  Deleting the state file to mark the build as started...`)
-      fs.unlink(paths.tempBuildState(buildName), err => {
-        if (err) {
-          onError(err)
-          onDone()
-          return
-        }
-
-        const state = JSON.parse(data)
-        if (state.version == stateVersion) {
-          console.log(`Its version matches.`)
-          oldState = state
-          buildLoadedOrDeleted()
-        } else {
-          console.log(`Its version does not match.`)
-          eraseExistingBuild()
-        }
-      })
+      console.log(`It exists, and is not empty; deleting contents...`)
+      for (const file of files) {
+        await rimrafPromisified(paths.join(paths.distBuild(buildName), file))
+      }
+      await buildLoadedOrDeleted()
     }
+  }
 
-    function eraseExistingBuild() {
-      console.log(`Erasing the "${paths.tempBuild(buildName)}" directory if it exists...`)
-      rimraf(paths.tempBuild(buildName), error => {
-        if (error) {
-          onError(error)
-          onDone()
-          return
-        }
-        console.log(`Recreating...`)
-        mkdirp(paths.tempBuild(buildName), error => {
-          if (error) {
-            onError(error)
-            onDone()
-            return
-          }
-          console.log(`Checking for a "${paths.distBuild(buildName)}" directory...`)
-          fs.readdir(paths.distBuild(buildName), (error, files) => {
-            if (error && error.code != `ENOENT`) {
-              onError(error)
-              onDone()
-              return
-            } else if (error) {
-              console.log(`It does not exist.`)
-              buildLoadedOrDeleted()
-            } else if (!files.length) {
-              console.log(`It exists, but is empty; ignoring.`)
-              buildLoadedOrDeleted()
-            } else {
-              console.log(`It exists, and is not empty; deleting contents...`)
-              let remaining = files.length
-              files.forEach(file => rimraf(paths.join(paths.distBuild(buildName), file), () => {
-                remaining--
-                if (!remaining) {
-                  buildLoadedOrDeleted()
-                }
-              }))
-            }
-          })
-        })
-      })
-    }
-  })
-
-  function buildLoadedOrDeleted() {
+  async function buildLoadedOrDeleted(): Promise<void> {
     Object
       .keys(allPaths)
       .forEach(path => {
@@ -109,43 +96,26 @@ export default (
     const oldGameNames = gameNames(oldState)
     const newGameNames = gameNames(newState)
 
-    let remaining = new Set([...oldGameNames, ...newGameNames]).size
-
-    if (remaining) {
-      Array
-        .from(newGameNames)
-        .filter(gameName => !oldGameNames.has(gameName))
-        .forEach(gameName => game.created(oldState, newState, buildName, gameName, onError, onGameDone))
-
-      Array
-        .from(newGameNames)
-        .filter(gameName => oldGameNames.has(gameName))
-        .forEach(gameName => game.updated(oldState, newState, buildName, gameName, onError, onGameDone))
-
-      Array
-        .from(oldGameNames)
-        .filter(gameName => !newGameNames.has(gameName))
-        .forEach(gameName => game.deleted(buildName, gameName, onError, onGameDone))
-
-      function onGameDone() {
-        remaining--
-        if (!remaining) {
-          onAllGamesDone()
-        }
-      }
-    } else {
-      onAllGamesDone()
+    for (const gameName of Array
+      .from(newGameNames)
+      .filter(gameName => !oldGameNames.has(gameName))) {
+      await game.created(oldState, newState, buildName, gameName)
     }
 
-    function onAllGamesDone() {
-      console.log(`Writing "${paths.tempBuildState(buildName)}" to mark build done...`)
-      fs.writeFile(paths.tempBuildState(buildName), JSON.stringify(newState), error => {
-        if (error) {
-          onError(error)
-        }
-        onDone()
-      })
+    for (const gameName of Array
+      .from(newGameNames)
+      .filter(gameName => oldGameNames.has(gameName))) {
+      await game.updated(oldState, newState, buildName, gameName)
     }
+
+    for (const gameName of Array
+      .from(oldGameNames)
+      .filter(gameName => !newGameNames.has(gameName))) {
+      await game.deleted(buildName, gameName)
+    }
+
+    console.log(`Writing "${paths.tempBuildState(buildName)}" to mark build done...`)
+    await fsWriteFile(paths.tempBuildState(buildName), JSON.stringify(newState))
   }
 }
 

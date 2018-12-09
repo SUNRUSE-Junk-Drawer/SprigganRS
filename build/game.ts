@@ -1,3 +1,4 @@
+import * as util from "util"
 import * as fs from "fs"
 import * as mkdirp from "mkdirp"
 import * as rimraf from "rimraf"
@@ -5,7 +6,11 @@ import * as paths from "./paths"
 import generateHtml from "./generateHtml"
 import * as _package from "./_package"
 
-export function created(
+const fsReadFile = util.promisify(fs.readFile)
+const mkdirpPromisified = util.promisify(mkdirp)
+const rimrafPromisified = util.promisify(rimraf)
+
+export async function created(
   oldState: {
     readonly paths: {
       readonly [path: string]: number
@@ -17,30 +22,18 @@ export function created(
     }
   },
   buildName: string,
-  gameName: string,
-  onError: (error: any) => void,
-  onDone: () => void
-): void {
+  gameName: string
+): Promise<void> {
   console.log(`Creating "${paths.tempBuildGame(buildName, gameName)}"...`)
-  mkdirp(paths.tempBuildGame(buildName, gameName), error => {
-    if (error) {
-      onError(error)
-      onDone()
-    } else {
-      console.log(`Creating "${paths.distBuildGame(buildName, gameName)}"...`)
-      mkdirp(paths.distBuildGame(buildName, gameName), error => {
-        if (error) {
-          onError(error)
-          onDone()
-        } else {
-          updated(oldState, newState, buildName, gameName, onError, onDone)
-        }
-      })
-    }
-  })
+  await mkdirpPromisified(paths.tempBuildGame(buildName, gameName))
+
+  console.log(`Creating "${paths.distBuildGame(buildName, gameName)}"...`)
+  await mkdirpPromisified(paths.distBuildGame(buildName, gameName))
+
+  await updated(oldState, newState, buildName, gameName)
 }
 
-export function updated(
+export async function updated(
   oldState: {
     readonly paths: {
       readonly [path: string]: number
@@ -52,18 +45,14 @@ export function updated(
     }
   },
   buildName: string,
-  gameName: string,
-  onError: (error: any) => void,
-  onDone: () => void
-) {
+  gameName: string
+): Promise<void> {
   console.log(`Updating game "${gameName}"...`)
 
   if (!Object.prototype.hasOwnProperty.call(newState.paths, paths.srcGameMetadata(gameName))) {
-    onError(`Game "${gameName}" does not appear to have a "metadata.json" file`)
-    onDone()
+    throw new Error(`Game "${gameName}" does not appear to have a "metadata.json" file`)
   } else if (!Object.prototype.hasOwnProperty.call(newState.paths, paths.srcGameIcon(gameName))) {
-    onError(`Game "${gameName}" does not appear to have an "icon.svg" file`)
-    onDone()
+    throw new Error(`Game "${gameName}" does not appear to have an "icon.svg" file`)
   } else {
     const createdOrModifiedFiles = new Set(
       Object
@@ -81,109 +70,69 @@ export function updated(
     )
     const changedFiles = new Set([...createdOrModifiedFiles, ...deletedFiles])
     console.log(`Reading "${paths.srcGameMetadata(gameName)}"...`)
-    fs.readFile(paths.srcGameMetadata(gameName), { encoding: `utf8` }, (error: any, data: string) => {
-      if (error) {
-        onError(error)
-        onDone()
-      } else {
-        console.log(`Parsing...`)
-        let possibleMetadata: null | {
-          name: string
-          readonly description: string
-          readonly developer: {
-            readonly name: string
-            readonly url: string
-          }
-          readonly width: number
-          readonly height: number
-        }
-        try {
-          possibleMetadata = JSON.parse(data)
-          if (!possibleMetadata) {
-            throw new Error(`The metadata file contained "null".`)
-          }
-        } catch (error) {
-          onError(error)
-          onDone()
-          return
-        }
-        const metadata = possibleMetadata
-        if (buildName == `watch`) {
-          metadata.name = `DEVELOPMENT BUILD - ${metadata.name}`
-        }
-
-        const oldPackageNames = packageNames(oldState, gameName)
-        const newPackageNames = packageNames(newState, gameName)
-
-        const createdPackages = Array
-          .from(newPackageNames)
-          .filter(packageName => !oldPackageNames.has(packageName))
-
-        const updatedPackages = Array
-          .from(newPackageNames)
-          .filter(packageName => oldPackageNames.has(packageName))
-          .filter(packageName => Array.from(changedFiles).map(paths.isSrcGamePackage).includes(packageName))
-
-        const deletedPackages = Array
-          .from(oldPackageNames)
-          .filter(packageName => !newPackageNames.has(packageName))
-
-        let remaining = createdPackages.length + updatedPackages.length + deletedPackages.length
-
-        if (remaining) {
-          createdPackages.forEach(packageName => _package.created(oldState, newState, buildName, gameName, packageName, onError, onPackageDone))
-          updatedPackages.forEach(packageName => _package.updated(oldState, newState, buildName, gameName, packageName, onError, onPackageDone))
-          deletedPackages.forEach(packageName => _package.deleted(buildName, gameName, packageName, onError, onPackageDone))
-
-          function onPackageDone() {
-            remaining--
-            if (!remaining) {
-              onAllPackagesDone()
-            }
-          }
-        } else {
-          onAllPackagesDone()
-        }
-
-        function onAllPackagesDone() {
-          generateHtml(
-            createdOrModifiedFiles,
-            buildName,
-            gameName,
-            metadata,
-            (error: any): void => {
-              onError(error)
-              onDone()
-            }, onDone
-          )
-        }
+    const data = await fsReadFile(paths.srcGameMetadata(gameName), { encoding: `utf8` })
+    console.log(`Parsing...`)
+    let metadata: {
+      name: string
+      readonly description: string
+      readonly developer: {
+        readonly name: string
+        readonly url: string
       }
-    })
+      readonly width: number
+      readonly height: number
+    } = JSON.parse(data)
+
+    if (buildName == `watch`) {
+      metadata.name = `DEVELOPMENT BUILD - ${metadata.name}`
+    }
+
+    const oldPackageNames = packageNames(oldState, gameName)
+    const newPackageNames = packageNames(newState, gameName)
+
+    const createdPackages = Array
+      .from(newPackageNames)
+      .filter(packageName => !oldPackageNames.has(packageName))
+
+    const updatedPackages = Array
+      .from(newPackageNames)
+      .filter(packageName => oldPackageNames.has(packageName))
+      .filter(packageName => Array.from(changedFiles).map(paths.isSrcGamePackage).includes(packageName))
+
+    const deletedPackages = Array
+      .from(oldPackageNames)
+      .filter(packageName => !newPackageNames.has(packageName))
+
+    for (const packageName of createdPackages) {
+      await _package.created(oldState, newState, buildName, gameName, packageName)
+    }
+
+    for (const packageName of updatedPackages) {
+      await _package.updated(oldState, newState, buildName, gameName, packageName)
+    }
+
+    for (const packageName of deletedPackages) {
+      await _package.deleted(buildName, gameName, packageName)
+    }
+
+    await generateHtml(
+      createdOrModifiedFiles,
+      buildName,
+      gameName,
+      metadata
+    )
   }
 }
 
-export function deleted(
+export async function deleted(
   buildName: string,
-  gameName: string,
-  onError: (error: any) => void,
-  onDone: () => void): void {
+  gameName: string
+): Promise<void> {
   console.log(`Deleting "${paths.tempBuildGame(buildName, gameName)}"...`)
-  rimraf(paths.tempBuildGame(buildName, gameName), error => {
-    if (error) {
-      onError(error)
-      onDone()
-    } else {
-      console.log(`Deleting "${paths.distBuildGame(buildName, gameName)}"...`)
-      rimraf(paths.distBuildGame(buildName, gameName), error => {
-        if (error) {
-          onError(error)
-          onDone()
-        } else {
-          onDone()
-        }
-      })
-    }
-  })
+  await rimrafPromisified(paths.tempBuildGame(buildName, gameName))
+
+  console.log(`Deleting "${paths.distBuildGame(buildName, gameName)}"...`)
+  await rimrafPromisified(paths.distBuildGame(buildName, gameName))
 }
 
 function packageNames(

@@ -1,45 +1,33 @@
+import * as util from "util"
 import * as fs from "fs"
 import * as paths from "./paths"
 import run from "./run"
 
-const allPaths = {}
-recurse(
-  `src`,
-  () => run(
-    allPaths,
-    `oneOff`,
-    error => { throw error },
-    () => console.log(`Done.`)
-  )
+const fsReaddir = util.promisify(fs.readdir)
+const fsStat = util.promisify(fs.stat)
+
+program().then(
+  () => console.log(`Done.`),
+  (error: any) => { throw error }
 )
 
-function recurse(directory, onSuccess) {
-  fs.readdir(directory, (error, files) => {
-    if (error) {
-      throw error
-    }
-    let remaining = files.length
-    files
-      .map(file => paths.join(directory, file))
-      .forEach(file => fs.stat(file, (error, stats) => {
-        if (error) {
-          throw error
-        }
-        if (stats.isFile()) {
-          allPaths[file] = stats.mtime.getTime()
-          fileDone()
-        } else if (stats.isDirectory()) {
-          recurse(file, fileDone)
-        } else {
-          console.warn(`Ignoring unexpected filesystem record "${file}"`)
-          fileDone()
-        }
-      }))
-    function fileDone() {
-      remaining--
-      if (!remaining) {
-        onSuccess()
+async function program(): Promise<void> {
+  const allPaths: { [path: string]: number } = {}
+
+  await recurse(`src`)
+  await run(allPaths, `oneOff`)
+
+  async function recurse(directory: string): Promise<void> {
+    for (let file of await fsReaddir(directory)) {
+      file = paths.join(directory, file)
+      const stats = await fsStat(file)
+      if (stats.isFile()) {
+        allPaths[file] = stats.mtime.getTime()
+      } else if (stats.isDirectory()) {
+        await recurse(file)
+      } else {
+        console.warn(`Ignoring unexpected filesystem record "${file}"`)
       }
     }
-  })
+  }
 }

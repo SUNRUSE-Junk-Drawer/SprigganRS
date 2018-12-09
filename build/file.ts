@@ -1,8 +1,13 @@
+import * as util from "util"
 import * as fs from "fs"
 import * as mkdirp from "mkdirp"
 import * as rimraf from "rimraf"
 import * as paths from "./paths"
 import svg from "./svg"
+
+const fsWriteFile = util.promisify(fs.writeFile)
+const mkdirpPromisified = util.promisify(mkdirp)
+const rimrafPromisified = util.promisify(rimraf)
 
 const extensions: {
   readonly [extension: string]: (
@@ -19,20 +24,18 @@ const extensions: {
     buildName: string,
     gameName: string,
     packageName: string,
-    fileName: string,
-    onError: (error: any) => void,
-    onSuccess: (generated: {
-      [path: string]: {
-        readonly code: string
-        readonly data: string
-      }
-    }) => void
-  ) => void
+    fileName: string
+  ) => Promise<{
+    [path: string]: {
+      readonly code: string
+      readonly data: string
+    }
+  }>
 } = {
   svg
 }
 
-export function created(
+export async function created(
   oldState: {
     readonly paths: {
       readonly [path: string]: number
@@ -47,17 +50,12 @@ export function created(
   gameName: string,
   packageName: string,
   fileName: string,
-  fileExtension: string,
-  onError: (error: any) => void,
-  onDone: () => void
-): void {
-  performCreation(oldState, newState, buildName, gameName, packageName, fileName, fileExtension, error => {
-    onError(error)
-    onDone()
-  }, onDone)
+  fileExtension: string
+): Promise<void> {
+  await performCreation(oldState, newState, buildName, gameName, packageName, fileName, fileExtension)
 }
 
-export function updated(
+export async function updated(
   oldState: {
     readonly paths: {
       readonly [path: string]: number
@@ -72,54 +70,34 @@ export function updated(
   gameName: string,
   packageName: string,
   fileName: string,
-  fileExtension: string,
-  onError: (error: any) => void,
-  onDone: () => void
-): void {
-  performDeletion(buildName, gameName, packageName, fileName, fileExtension, error => {
-    onError(error)
-    onDone()
-  }, () => performCreation(oldState, newState, buildName, gameName, packageName, fileName, fileExtension, error => {
-    onError(error)
-    onDone()
-  }, onDone))
+  fileExtension: string
+): Promise<void> {
+  await performDeletion(buildName, gameName, packageName, fileName, fileExtension)
+  await performCreation(oldState, newState, buildName, gameName, packageName, fileName, fileExtension)
 }
 
-export function deleted(
+export async function deleted(
   buildName: string,
   gameName: string,
   packageName: string,
   fileName: string,
-  fileExtension: string,
-  onError: (error: any) => void,
-  onDone: () => void
-): void {
-  performDeletion(buildName, gameName, packageName, fileName, fileExtension, error => {
-    onError(error)
-    onDone()
-  }, onDone)
+  fileExtension: string
+): Promise<void> {
+  await performDeletion(buildName, gameName, packageName, fileName, fileExtension)
 }
 
-function performDeletion(
+async function performDeletion(
   buildName: string,
   gameName: string,
   packageName: string,
   fileName: string,
-  fileExtension: string,
-  onError: (error: any) => void,
-  onSuccess: () => void
-): void {
+  fileExtension: string
+): Promise<void> {
   console.log(`Deleting "${paths.tempBuildGamePackageFile(buildName, gameName, packageName, fileName, fileExtension)}"...`)
-  rimraf(paths.tempBuildGamePackageFile(buildName, gameName, packageName, fileName, fileExtension), error => {
-    if (error) {
-      onError(error)
-    } else {
-      onSuccess()
-    }
-  })
+  await rimrafPromisified(paths.tempBuildGamePackageFile(buildName, gameName, packageName, fileName, fileExtension))
 }
 
-function performCreation(
+async function performCreation(
   oldState: {
     readonly paths: {
       readonly [path: string]: number
@@ -134,33 +112,18 @@ function performCreation(
   gameName: string,
   packageName: string,
   fileName: string,
-  fileExtension: string,
-  onError: (error: any) => void,
-  onSuccess: () => void
-): void {
-  console.log(`Creating "${paths.tempBuildGamePackageFile(buildName, gameName, packageName, fileName, fileExtension)}"...`)
-  mkdirp(paths.tempBuildGamePackageFile(buildName, gameName, packageName, fileName, fileExtension), err => {
-    if (err) {
-      onError(err)
-    } else {
-      if (Object.prototype.hasOwnProperty.call(extensions, fileExtension)) {
-        extensions[fileExtension](oldState, newState, buildName, gameName, packageName, fileName, onError, (generated) => {
-          console.log(`Writing "${paths.tempBuildGamePackageFileCache(buildName, gameName, packageName, fileName, fileExtension)}"...`)
-          fs.writeFile(
-            paths.tempBuildGamePackageFileCache(buildName, gameName, packageName, fileName, fileExtension),
-            JSON.stringify(generated),
-            err => {
-              if (err) {
-                onError(err)
-              } else {
-                onSuccess()
-              }
-            }
-          )
-        })
-      } else {
-        onError(`Unknown file extension "${fileExtension}" for "${paths.srcGamePackageFile(gameName, packageName, fileName, fileExtension)}".`)
-      }
-    }
-  })
+  fileExtension: string
+): Promise<void> {
+  if (Object.prototype.hasOwnProperty.call(extensions, fileExtension)) {
+    console.log(`Creating "${paths.tempBuildGamePackageFile(buildName, gameName, packageName, fileName, fileExtension)}"...`)
+    await mkdirpPromisified(paths.tempBuildGamePackageFile(buildName, gameName, packageName, fileName, fileExtension))
+    const generated = await extensions[fileExtension](oldState, newState, buildName, gameName, packageName, fileName)
+    console.log(`Writing "${paths.tempBuildGamePackageFileCache(buildName, gameName, packageName, fileName, fileExtension)}"...`)
+    await fsWriteFile(
+      paths.tempBuildGamePackageFileCache(buildName, gameName, packageName, fileName, fileExtension),
+      JSON.stringify(generated)
+    )
+  } else {
+    throw new Error(`Unknown file extension "${fileExtension}" for "${paths.srcGamePackageFile(gameName, packageName, fileName, fileExtension)}".`)
+  }
 }
