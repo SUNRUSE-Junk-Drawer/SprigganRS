@@ -83,9 +83,9 @@ async function performCreation(
   fileName: string,
   fileExtension: string
 ): Promise<void> {
+  console.log(`Creating "${paths.tempBuildGamePackageFile(buildName, gameName, packageName, fileName, fileExtension)}"...`)
+  await mkdirpPromisified(paths.tempBuildGamePackageFile(buildName, gameName, packageName, fileName, fileExtension))
   if (Object.prototype.hasOwnProperty.call(extensions, fileExtension)) {
-    console.log(`Creating "${paths.tempBuildGamePackageFile(buildName, gameName, packageName, fileName, fileExtension)}"...`)
-    await mkdirpPromisified(paths.tempBuildGamePackageFile(buildName, gameName, packageName, fileName, fileExtension))
     const generated = await extensions[fileExtension](oldState, newState, buildName, gameName, packageName, fileName)
     console.log(`Writing "${paths.tempBuildGamePackageFileCache(buildName, gameName, packageName, fileName, fileExtension)}"...`)
     await fsWriteFile(
@@ -93,6 +93,10 @@ async function performCreation(
       JSON.stringify(generated)
     )
   } else {
-    throw new Error(`Unknown file extension "${fileExtension}" for "${paths.srcGamePackageFile(gameName, packageName, fileName, fileExtension)}".`)
+    console.warn(`Unknown file extension "${fileExtension}" for "${paths.srcGamePackageFile(gameName, packageName, fileName, fileExtension)}".`)
+    await fsWriteFile(
+      paths.tempBuildGamePackageFileCache(buildName, gameName, packageName, fileName, fileExtension),
+      JSON.stringify({})
+    )
   }
 }
