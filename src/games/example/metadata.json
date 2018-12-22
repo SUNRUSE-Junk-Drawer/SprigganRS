@@ -6,5 +6,9 @@
     "url": "https://sunruse.co.uk"
   },
   "width": 428,
-  "height": 240
+  "height": 240,
+  "localizations": [
+    "en-gb",
+    "fr-fr"
+  ]
 }
