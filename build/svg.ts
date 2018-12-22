@@ -95,9 +95,17 @@ export default async function (
   buildName: types.buildName,
   gameName: string,
   packageName: string,
-  fileName: string
+  fileName: string,
+  audioFormats: types.audioFormat[]
 ): Promise<{
   [path: string]: {
+    readonly type: `audio`
+    readonly code: string
+    readonly data: {
+      readonly [format: string]: string
+    }
+  } | {
+    readonly type: `nonAudio`
     readonly code: string
     readonly data: string
   }
@@ -189,6 +197,7 @@ export default async function (
 
   const generated: {
     [path: string]: {
+      readonly type: `nonAudio`
       readonly code: string
       readonly data: string
     }
@@ -222,6 +231,7 @@ export default async function (
       throw new Error(`This should never happen, and is required by Typescript.`)
     }
     generated[layer.name] = {
+      type: `nonAudio`,
       code: `engineSvg`,
       data: optimized.elements.map(element => xmlJs.js2xml(element)).join(``)
     }

@@ -47,5 +47,5 @@ export const tempBuildGamePackageFileCache = (buildName: types.buildName, gameNa
 export const distBuild = (buildName: types.buildName): string => join(dist, buildName)
 export const distBuildGame = (buildName: types.buildName, gameName: string): string => join(distBuild(buildName), gameName)
 export const distBuildGameFile = (buildName: types.buildName, gameName: string, fileName: string): string => join(distBuildGame(buildName, gameName), fileName)
-export const distBuildGamePackage = (buildName: types.buildName, gameName: string, packageName: string): string => distBuildGameFile(buildName, gameName, `${packageName}.txt`)
+export const distBuildGamePackage = (buildName: types.buildName, gameName: string, packageName: string, audioFormat: types.audioFormat): string => distBuildGameFile(buildName, gameName, `${packageName}-${audioFormat}.txt`)
 export const distBuildGameHtml = (buildName: types.buildName, gameName: string): string => distBuildGameFile(buildName, gameName, `index.html`)

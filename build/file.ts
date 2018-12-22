@@ -17,16 +17,22 @@ const extensions: {
     buildName: types.buildName,
     gameName: string,
     packageName: string,
-    fileName: string
+    fileName: string,
+    audioFormats: types.audioFormat[]
   ) => Promise<{
     [path: string]: {
+      readonly type: `audio`
+      readonly code: string
+      readonly data: {
+        readonly [format: string]: string
+      }
+    } | {
+      readonly type: `nonAudio`
       readonly code: string
       readonly data: string
     }
   }>
-} = {
-  svg
-}
+} = { svg }
 
 export async function created(
   oldState: types.state,
@@ -35,9 +41,10 @@ export async function created(
   gameName: string,
   packageName: string,
   fileName: string,
-  fileExtension: string
+  fileExtension: string,
+  audioFormats: types.audioFormat[]
 ): Promise<void> {
-  await performCreation(oldState, newState, buildName, gameName, packageName, fileName, fileExtension)
+  await performCreation(oldState, newState, buildName, gameName, packageName, fileName, fileExtension, audioFormats)
 }
 
 export async function updated(
@@ -47,10 +54,11 @@ export async function updated(
   gameName: string,
   packageName: string,
   fileName: string,
-  fileExtension: string
+  fileExtension: string,
+  audioFormats: types.audioFormat[]
 ): Promise<void> {
   await performDeletion(buildName, gameName, packageName, fileName, fileExtension)
-  await performCreation(oldState, newState, buildName, gameName, packageName, fileName, fileExtension)
+  await performCreation(oldState, newState, buildName, gameName, packageName, fileName, fileExtension, audioFormats)
 }
 
 export async function deleted(
@@ -81,12 +89,13 @@ async function performCreation(
   gameName: string,
   packageName: string,
   fileName: string,
-  fileExtension: string
+  fileExtension: string,
+  audioFormats: types.audioFormat[]
 ): Promise<void> {
   console.log(`Creating "${paths.tempBuildGamePackageFile(buildName, gameName, packageName, fileName, fileExtension)}"...`)
   await mkdirpPromisified(paths.tempBuildGamePackageFile(buildName, gameName, packageName, fileName, fileExtension))
   if (Object.prototype.hasOwnProperty.call(extensions, fileExtension)) {
-    const generated = await extensions[fileExtension](oldState, newState, buildName, gameName, packageName, fileName)
+    const generated = await extensions[fileExtension](oldState, newState, buildName, gameName, packageName, fileName, audioFormats)
     console.log(`Writing "${paths.tempBuildGamePackageFileCache(buildName, gameName, packageName, fileName, fileExtension)}"...`)
     await fsWriteFile(
       paths.tempBuildGamePackageFileCache(buildName, gameName, packageName, fileName, fileExtension),

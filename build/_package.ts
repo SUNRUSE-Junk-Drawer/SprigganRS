@@ -16,11 +16,12 @@ export async function created(
   newState: types.state,
   buildName: types.buildName,
   gameName: string,
-  packageName: string
+  packageName: string,
+  audioFormats: types.audioFormat[]
 ): Promise<void> {
   console.log(`Creating "${paths.tempBuildGamePackage(buildName, gameName, packageName)}"...`)
   await mkdirpPromisified(paths.tempBuildGamePackage(buildName, gameName, packageName))
-  await updated(oldState, newState, buildName, gameName, packageName)
+  await updated(oldState, newState, buildName, gameName, packageName, audioFormats)
 }
 
 export async function updated(
@@ -28,7 +29,8 @@ export async function updated(
   newState: types.state,
   buildName: types.buildName,
   gameName: string,
-  packageName: string
+  packageName: string,
+  audioFormats: types.audioFormat[]
 ): Promise<void> {
   console.log(`Updating package "${packageName}"...`)
 
@@ -49,11 +51,11 @@ export async function updated(
     .filter(fileName => !newFileNames.has(fileName))
 
   for (const fileName of createdFiles) {
-    await file.created(oldState, newState, buildName, gameName, packageName, paths.extractSrcGamePackageFileName(fileName), paths.extractSrcGamePackageFileExtension(fileName))
+    await file.created(oldState, newState, buildName, gameName, packageName, paths.extractSrcGamePackageFileName(fileName), paths.extractSrcGamePackageFileExtension(fileName), audioFormats)
   }
 
   for (const fileName of updatedFiles) {
-    await file.updated(oldState, newState, buildName, gameName, packageName, paths.extractSrcGamePackageFileName(fileName), paths.extractSrcGamePackageFileExtension(fileName))
+    await file.updated(oldState, newState, buildName, gameName, packageName, paths.extractSrcGamePackageFileName(fileName), paths.extractSrcGamePackageFileExtension(fileName), audioFormats)
   }
 
   for (const fileName of deletedFiles) {
@@ -66,12 +68,21 @@ export async function updated(
       [name: string]: collected
     }
   }
-  type collectedFile = {
-    readonly type: `file`
+  type collectedAudio = {
+    readonly type: `audio`
+    readonly path: string
     readonly code: string
-    readonly data: [number, number]
+    readonly data: {
+      readonly [format in types.audioFormat]: string
+    }
   }
-  type collected = collectedDirectory | collectedFile
+  type collectedNonAudio = {
+    readonly type: `nonAudio`
+    readonly path: string
+    readonly code: string
+    readonly data: string
+  }
+  type collected = collectedDirectory | collectedAudio | collectedNonAudio
   const root: collectedDirectory = {
     type: `directory`,
     children: {}
@@ -80,15 +91,26 @@ export async function updated(
   console.log(`Collecting files in package "${packageName}"...`)
 
   let collected = 0
-  let concatenatedData = ``
-
   for (const fileName of newFileNames) {
-    console.log(`Collecting files in package "${packageName}"... (${collected++}/${newFileNames.size})`)
+    console.log(`Reading package "${packageName}"... (${collected++}/${newFileNames.size})`)
     const data = await fsReadFile(
       paths.tempBuildGamePackageFileCache(buildName, gameName, packageName, paths.extractSrcGamePackageFileName(fileName), paths.extractSrcGamePackageFileExtension(fileName)),
       { encoding: `utf8` }
     )
-    const parsed = JSON.parse(data)
+    const parsed: {
+      [path: string]: {
+        readonly type: `audio`
+        readonly code: string
+        readonly data: {
+          readonly [format in types.audioFormat]: string
+        }
+      } | {
+        readonly type: `nonAudio`
+        readonly code: string
+        readonly data: string
+      }
+    } = JSON.parse(data)
+
     for (const key in parsed) {
       const keys = key.split(`/`)
       if (key.endsWith(`/`)) {
@@ -108,7 +130,8 @@ export async function updated(
                 throw new Error(`"${key}" is the name of both a piece of content and an object containing content in package "${packageName}"`)
               }
               break
-            case `file`:
+            case `audio`:
+            case `nonAudio`:
               if (keys.length > 1) {
                 throw new Error(`"${key}" is the name of both an object containing content and a piece of content in package "${packageName}"`)
               } else {
@@ -124,12 +147,25 @@ export async function updated(
             pointer.children[keys[0]] = newDirectory
             pointer = newDirectory
           } else {
-            pointer.children[keys[0]] = {
-              type: `file`,
-              code: parsed[key].code,
-              data: [concatenatedData.length, parsed[key].data.length]
+            const direct = parsed[key]
+            switch (direct.type) {
+              case `audio`:
+                pointer.children[keys[0]] = {
+                  type: `audio`,
+                  path: key,
+                  code: direct.code,
+                  data: direct.data
+                }
+                break
+              case `nonAudio`:
+                pointer.children[keys[0]] = {
+                  type: `nonAudio`,
+                  path: key,
+                  code: direct.code,
+                  data: direct.data
+                }
+                break
             }
-            concatenatedData += parsed[key].data
           }
         }
         keys.shift()
@@ -142,90 +178,104 @@ export async function updated(
 
   console.log(`Deleting "${paths.tempBuildGamePackageCode(buildName, gameName, packageName)}"...`)
   await rimrafPromisified(paths.tempBuildGamePackageCode(buildName, gameName, packageName))
-  console.log(`Writing "${paths.distBuildGamePackage(buildName, gameName, packageName)}"...`)
-  interface recursedDataArray extends Array<recursedData> { }
-  type recursedData = [number, number] | {
-    readonly [key: string]: recursedData
-  } | recursedDataArray
-  function recurseData(
-    pointer: collected
-  ): recursedData {
-    switch (pointer.type) {
-      case `file`:
-        return pointer.data
-      case `directory`:
-        const asArray = checkIfArray(pointer.children)
-        if (asArray) {
-          return asArray.map(recurseData)
-        } else {
-          const output: { [key: string]: recursedData } = {}
-          for (const key in pointer.children) {
-            output[key] = recurseData(pointer.children[key])
-          }
-          return output
-        }
-    }
-  }
-  await fsWriteFile(
-    paths.distBuildGamePackage(buildName, gameName, packageName),
-    `${JSON.stringify(recurseData(root))}\n${concatenatedData}`
-  )
-  console.log(`Writing "${paths.tempBuildGamePackageCode(buildName, gameName, packageName)}"...`)
-  function recurseCode(
-    pointer: collected,
-    indents: number
-  ): string {
-    switch (pointer.type) {
-      case `file`:
-        return pointer.code
-      case `directory`:
-        const asArray = checkIfArray(pointer)
-        if (asArray) {
-          let output = `[`
-          let first = true
-          for (const key in pointer.children) {
-            if (first) {
-              first = false
-            } else {
-              output += `,`
-            }
-            output += `\n${`\t`.repeat(indents + 1)}${recurseCode(pointer.children[key], indents + 1)}`
-          }
-          output += `\n${`\t`.repeat(indents)}]`
-          return output
-        } else {
-          let output = `{`
-          let first = true
-          for (const key in pointer.children) {
-            if (first) {
-              first = false
-            } else {
-              output += `,`
-            }
-            output += `\n${`\t`.repeat(indents + 1)}readonly ${JSON.stringify(key)}: ${recurseCode(pointer.children[key], indents + 1)}`
-          }
-          output += `\n${`\t`.repeat(indents)}}`
-          return output
-        }
-    }
-  }
+  for (const audioFormat of audioFormats) {
+    console.log(`Audio format "${audioFormat}"...`)
+    let concatenatedData = ``
 
-  await fsWriteFile(
-    paths.tempBuildGamePackageCode(buildName, gameName, packageName),
-    `type ${packageName} = ${recurseCode(root, 0)}`
-  )
+    interface recursedDataArray extends Array<recursedData> { }
+    type recursedData = [number, number] | {
+      readonly [key: string]: recursedData
+    } | recursedDataArray
+
+    function recurseFiles(
+      pointer: collected,
+      indents: number
+    ): {
+      readonly data: recursedData
+      readonly code: string
+    } {
+      switch (pointer.type) {
+        case `directory`:
+          const asArray = checkIfArray(pointer.children)
+          if (asArray) {
+            const mapped = asArray.map(item => recurseFiles(item, indents + 1))
+            return {
+              data: mapped.map(item => item.data),
+              code: `[${mapped.map(item => `\n${`\t`.repeat(indents + 1)}${item.code}`).join(`,`)}\n${`\t`.repeat(indents)}]`
+            }
+          } else {
+            const output: {
+              readonly data: {
+                [key: string]: recursedData
+              }
+              code: string
+            } = {
+              data: {},
+              code: `{`
+            }
+            let first = true
+            for (const key in pointer.children) {
+              const value = recurseFiles(pointer.children[key], indents + 1)
+              output.data[key] = value.data
+              if (first) {
+                first = false
+              } else {
+                output.code += `,`
+              }
+              output.code += `\n${`\t`.repeat(indents + 1)}readonly ${JSON.stringify(key)}: ${value.code}`
+            }
+            output.code += `\n${`\t`.repeat(indents)}}`
+            return output
+          }
+        case `audio`:
+          return handle(pointer.data[audioFormat], pointer.code)
+        case `nonAudio`:
+          return handle(pointer.data, pointer.code)
+      }
+      function handle(data: string, code: string): {
+        readonly data: recursedData
+        readonly code: string
+      } {
+        const output: {
+          readonly data: recursedData
+          readonly code: string
+        } = {
+          data: [concatenatedData.length, data.length],
+          code: code
+        }
+        concatenatedData += data
+        return output
+      }
+    }
+
+    const recursed = recurseFiles(root, 0)
+
+    console.log(`Writing "${paths.distBuildGamePackage(buildName, gameName, packageName, audioFormat)}"...`)
+    await fsWriteFile(
+      paths.distBuildGamePackage(buildName, gameName, packageName, audioFormat),
+      `${JSON.stringify(recursed.data)}\n${concatenatedData}`
+    )
+    console.log(`Writing "${paths.tempBuildGamePackageCode(buildName, gameName, packageName)}"...`)
+    await fsWriteFile(
+      paths.tempBuildGamePackageCode(buildName, gameName, packageName),
+      `type ${packageName} = ${recursed.code}`
+    )
+  }
 }
 
 export async function deleted(
   buildName: types.buildName,
   gameName: string,
-  packageName: string
+  packageName: string,
+  audioFormats: types.audioFormat[]
 ): Promise<void> {
   console.log(`Deleting "${paths.tempBuildGamePackage(buildName, gameName, packageName)}"...`)
   await rimrafPromisified(paths.tempBuildGamePackage(buildName, gameName, packageName))
 
-  console.log(`Deleting "${paths.distBuildGamePackage(buildName, gameName, packageName)}"...`)
-  await rimrafPromisified(paths.distBuildGamePackage(buildName, gameName, packageName))
+  for (const audioFormat of audioFormats) {
+    console.log(`Deleting "${paths.distBuildGamePackage(buildName, gameName, packageName, audioFormat)}"...`)
+    await rimrafPromisified(paths.distBuildGamePackage(buildName, gameName, packageName, audioFormat))
+  }
 }
 
 function fileNames(

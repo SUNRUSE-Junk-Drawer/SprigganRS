@@ -13,7 +13,7 @@ const fsReaddir = util.promisify(fs.readdir)
 const mkdirpPromisified = util.promisify(mkdirp)
 const rimrafPromisified = util.promisify(rimraf)
 
-const stateVersion = 11
+const stateVersion = 12
 
 export default async (
   allPaths: { [path: string]: number },
@@ -97,16 +97,20 @@ export default async (
     const oldGameNames = gameNames(oldState)
     const newGameNames = gameNames(newState)
 
+    const audioFormats: types.audioFormat[] = buildName == `watch`
+      ? [`none`, `mp3`]
+      : [`none`, `wav`, `mp3`, `ogg`]
+
     for (const gameName of Array
       .from(newGameNames)
       .filter(gameName => !oldGameNames.has(gameName))) {
-      await game.created(oldState, newState, buildName, gameName)
+      await game.created(oldState, newState, buildName, gameName, audioFormats)
     }
 
     for (const gameName of Array
       .from(newGameNames)
       .filter(gameName => oldGameNames.has(gameName))) {
-      await game.updated(oldState, newState, buildName, gameName)
+      await game.updated(oldState, newState, buildName, gameName, audioFormats)
     }
 
     for (const gameName of Array

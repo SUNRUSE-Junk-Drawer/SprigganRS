@@ -15,7 +15,8 @@ export async function created(
   oldState: types.state,
   newState: types.state,
   buildName: types.buildName,
-  gameName: string
+  gameName: string,
+  audioFormats: types.audioFormat[]
 ): Promise<void> {
   console.log(`Creating "${paths.tempBuildGame(buildName, gameName)}"...`)
   await mkdirpPromisified(paths.tempBuildGame(buildName, gameName))
@@ -23,14 +24,15 @@ export async function created(
   console.log(`Creating "${paths.distBuildGame(buildName, gameName)}"...`)
   await mkdirpPromisified(paths.distBuildGame(buildName, gameName))
 
-  await updated(oldState, newState, buildName, gameName)
+  await updated(oldState, newState, buildName, gameName, audioFormats)
 }
 
 export async function updated(
   oldState: types.state,
   newState: types.state,
   buildName: types.buildName,
-  gameName: string
+  gameName: string,
+  audioFormats: types.audioFormat[]
 ): Promise<void> {
   console.log(`Updating game "${gameName}"...`)
 
@@ -89,15 +91,15 @@ export async function updated(
       .filter(packageName => !newPackageNames.has(packageName))
 
     for (const packageName of createdPackages) {
-      await _package.created(oldState, newState, buildName, gameName, packageName)
+      await _package.created(oldState, newState, buildName, gameName, packageName, audioFormats)
     }
 
     for (const packageName of updatedPackages) {
-      await _package.updated(oldState, newState, buildName, gameName, packageName)
+      await _package.updated(oldState, newState, buildName, gameName, packageName, audioFormats)
     }
 
     for (const packageName of deletedPackages) {
-      await _package.deleted(buildName, gameName, packageName)
+      await _package.deleted(buildName, gameName, packageName, audioFormats)
     }
 
     await generateHtml(

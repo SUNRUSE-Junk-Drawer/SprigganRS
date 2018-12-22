@@ -6,3 +6,5 @@ export interface state {
 }
 
 export type buildName = `oneOff` | `watch`
+
+export type audioFormat = `none` | `wav` | `mp3` | `ogg`
