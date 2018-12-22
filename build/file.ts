@@ -5,6 +5,7 @@ import * as rimraf from "rimraf"
 import * as types from "./types"
 import * as paths from "./paths"
 import svg from "./svg"
+import wav from "./wav"
 
 const fsWriteFile = util.promisify(fs.writeFile)
 const mkdirpPromisified = util.promisify(mkdirp)
@@ -32,7 +33,7 @@ const extensions: {
       readonly data: string
     }
   }>
-} = { svg }
+} = { svg, wav }
 
 export async function created(
   oldState: types.state,
