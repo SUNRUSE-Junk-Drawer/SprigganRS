@@ -38,8 +38,12 @@ The coordinate space is a number of "units" wide (X) and tall (Y) (defined in th
 |   |'- (game name).zip
 |    '- (game name)
 |       |'- index.html
-|       |'- index.js
-|        '- (package name)-(audio format).txt
+|       |'- icon.svg
+|        '- (localization name)
+|           |'- icon.svg
+|           |'- index.html
+|           |'- index.js
+|            '- (package name)-(audio format).txt
  '- src
     |'- engine
     |   |'- header/index.ts
@@ -47,11 +51,17 @@ The coordinate space is a number of "units" wide (X) and tall (Y) (defined in th
     |    '- footer/index.ts
      '- (game name)
         |'- metadata.json
+        |'- localizationIcons
+        |   '- (localization name).svg
         |'- icon.svg
         |'- index.ts
          '- packages
             '- (package name)
-               '- (**/*.svg)
+               |'- *.svg
+               |'- *.wav
+                '- *
+                   |'- (localization name).svg
+                    '- (localization name).wav
 ```
 
 ### dist/(game name).zip
@@ -105,7 +115,11 @@ A JSON file describing that particular game.
     "url": "https://example.com"
   },
   "width": 320,
-  "height": 180
+  "height": 180,
+  "localizations": [
+    "en-gb",
+    "fr-fr"
+  ]
 }
 ```
 
@@ -133,6 +147,11 @@ The number of units the "safe zone" is "wide" (see Coordinate Space).
 #### width
 
 The number of units the "safe zone" is "tall" (see Coordinate Space).
+
+#### localizations
+
+A set of the names of the supported localizations.  Only the first will be built
+in "watch" mode.
 
 ### src/games/(game name)/icon.svg
 
@@ -184,9 +203,19 @@ a slash inside a folder:
 | `fonts\default\/` | fonts | default | /   |
 | `fonts\default\\` | fonts | default | \   |
 
-### src/games/(game name)/package/(package name)**/*.svg
+### src/games/(game name)/packages/(package name)/*/(localization name).*
 
-If an Inkscape SVG with multiple layers is  found, it is split into one piece of
+Subdirectories in packages represent content which varies by localization.  For
+instance:
+
+| Path                                               | Localization Name | Imported as though                           |
+|----------------------------------------------------|-------------------|----------------------------------------------|
+| src/games/example/packages/menu/strings/en-gb.json | en-gb             | src/games/example/packages/menu/strings.json |
+| src/games/example/packages/menu/strings/fr-fr.json | fr-fr             | src/games/example/packages/menu/strings.json |
+
+### src/games/(game name)/package/(package name)/*[/(localization name)].svg
+
+If an Inkscape SVG with multiple layers is found, it is split into one piece of
 content per layer and their names are included in their file names; a file with
 a name of:
 
