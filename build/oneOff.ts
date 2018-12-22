@@ -8,7 +8,10 @@ const fsStat = util.promisify(fs.stat)
 
 program().then(
   () => console.log(`Done.`),
-  (error: any) => { throw error }
+  (error: any) => {
+    console.error(error)
+    process.exit(1)
+  }
 )
 
 async function program(): Promise<void> {

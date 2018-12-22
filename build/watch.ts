@@ -10,7 +10,10 @@ const mkdirpPromisified = util.promisify(mkdirp)
 
 program().then(
   () => console.log(`Stopped.`),
-  (error: any) => { throw error }
+  (error: any) => {
+    console.error(error)
+    process.exit(1)
+  }
 )
 
 async function program(): Promise<void> {
