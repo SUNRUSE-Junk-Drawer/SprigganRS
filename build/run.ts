@@ -13,7 +13,7 @@ const fsReaddir = util.promisify(fs.readdir)
 const mkdirpPromisified = util.promisify(mkdirp)
 const rimrafPromisified = util.promisify(rimraf)
 
-const stateVersion = 14
+const stateVersion = 15
 
 export default async (
   allPaths: { [path: string]: number },
@@ -23,7 +23,8 @@ export default async (
 
   let oldState: types.state = {
     version: stateVersion,
-    paths: {}
+    paths: {},
+    games: {}
   }
 
   let data: string

@@ -9,12 +9,17 @@ export interface metadata {
   readonly height: number
 }
 
-export type mutable<T> = { -readonly [P in keyof T]-?: T[P] }
+export type mutable<T> = { -readonly [P in keyof T]-?: mutable<T[P]> }
 
 export interface state {
   readonly version: number
   readonly paths: {
     readonly [path: string]: number
+  }
+  readonly games: {
+    readonly [name: string]: {
+      readonly metadata: metadata
+    }
   }
 }
 

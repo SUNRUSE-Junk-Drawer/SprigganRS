@@ -29,7 +29,7 @@ export async function created(
 
 export async function updated(
   oldState: types.state,
-  newState: types.state,
+  newState: types.mutable<types.state>,
   buildName: types.buildName,
   gameName: string,
   audioFormats: types.audioFormat[]
@@ -63,6 +63,14 @@ export async function updated(
 
     if (buildName == `watch`) {
       metadata.name = `DEVELOPMENT BUILD - ${metadata.name}`
+    }
+
+    if (Object.prototype.hasOwnProperty.call(newState.games, gameName)) {
+      newState.games[gameName].metadata = metadata
+    } else {
+      newState.games[gameName] = {
+        metadata: metadata
+      }
     }
 
     const oldPackageNames = packageNames(oldState, gameName)
