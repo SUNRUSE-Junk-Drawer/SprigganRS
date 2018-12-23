@@ -116,10 +116,17 @@ A JSON file describing that particular game.
   },
   "width": 320,
   "height": 180,
-  "localizations": [
-    "en-gb",
-    "fr-fr"
-  ]
+  "defaultLocalization": "en-gb",
+  "localizations": {
+    "en-gb": {
+      "name": "Game Name",
+      "description": "Game Description",
+      "developer": {
+        "name": "Developer Name",
+        "url": "https://example.com"
+      }
+    }
+  }
 }
 ```
 
@@ -148,10 +155,27 @@ The number of units the "safe zone" is "wide" (see Coordinate Space).
 
 The number of units the "safe zone" is "tall" (see Coordinate Space).
 
-#### localizations
+#### defaultLocalization
 
-A set of the names of the supported localizations.  Only the first will be built
-in "watch" mode.
+The name of the localization to use during a watch build (as only one will be
+built for shorter iteration times).
+
+#### localizations.(localization name).name
+
+Shown as the page title, and when "pinned" to the home screen of a mobile
+device.
+
+#### localizations.(localization name).description
+
+A short description of the game, included in metadata.
+
+#### localizations.(localization name).developer.name
+
+The name of the developer of the game, included in metadata.
+
+#### localizations.(localization name).developer.url
+
+The URL of the developer of the game, included in metadata.
 
 ### src/games/(game name)/icon.svg
 
