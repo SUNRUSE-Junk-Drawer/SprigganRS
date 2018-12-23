@@ -51,8 +51,9 @@ The coordinate space is a number of "units" wide (X) and tall (Y) (defined in th
     |    '- footer/index.ts
      '- (game name)
         |'- metadata.json
-        |'- localizationIcons
-        |   '- (localization name).svg
+        |'- localizations
+        |   '- icon.svg
+        |   '- flag.svg
         |'- icon.svg
         |'- index.ts
          '- packages
@@ -176,6 +177,16 @@ The name of the developer of the game, included in metadata.
 #### localizations.(localization name).developer.url
 
 The URL of the developer of the game, included in metadata.
+
+### src/games/(game name)/localizations/(localization name)/flag.svg
+
+An icon to use under this localization; shown as a favicon, splash screen and
+when "pinned" to the home screen of a mobile devce.  Expected to be square.
+
+### src/games/(game name)/localizations/(localization name)/flag.svg
+
+An icon for this localization; shown on the localization menu.  Expected to be
+square.
 
 ### src/games/(game name)/icon.svg
 
