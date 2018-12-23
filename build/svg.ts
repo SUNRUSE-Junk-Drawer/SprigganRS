@@ -1,93 +1,11 @@
 import * as util from "util"
 import * as fs from "fs"
 import * as xmlJs from "xml-js"
-import * as svgo from "svgo"
 import * as types from "./types"
 import * as paths from "./paths"
+import svgo from "./svgo"
 
 const fsReadFile = util.promisify(fs.readFile)
-
-const svgoInstance = new svgo({
-  plugins: [{
-    cleanupAttrs: true
-  }, {
-    inlineStyles: true
-  } as any, {
-    removeDoctype: true
-  }, {
-    removeXMLProcInst: true
-  }, {
-    removeComments: true
-  }, {
-    removeMetadata: true
-  }, {
-    removeTitle: true
-  }, {
-    removeDesc: true
-  }, {
-    removeUselessDefs: true
-  }, {
-    removeXMLNS: false
-  }, {
-    removeEditorsNSData: true
-  }, {
-    removeEmptyAttrs: true
-  }, {
-    removeHiddenElems: true
-  }, {
-    removeEmptyText: true
-  }, {
-    removeEmptyContainers: true
-  }, {
-    removeViewBox: true
-  }, {
-    cleanupEnableBackground: true
-  }, {
-    minifyStyles: true
-  }, {
-    convertStyleToAttrs: true
-  }, {
-    convertColors: true
-  }, {
-    convertPathData: true
-  }, {
-    convertTransform: true
-  }, {
-    removeUnknownsAndDefaults: true
-  }, {
-    removeNonInheritableGroupAttrs: true
-  }, {
-    removeUselessStrokeAndFill: true
-  }, {
-    removeUnusedNS: true
-  }, {
-    cleanupIDs: true
-  }, {
-    cleanupNumericValues: true
-  }, {
-    cleanupListOfValues: true
-  }, {
-    moveElemsAttrsToGroup: true
-  }, {
-    moveGroupAttrsToElems: true
-  }, {
-    collapseGroups: true
-  }, {
-    removeRasterImages: true
-  }, {
-    mergePaths: true
-  }, {
-    convertShapeToPath: true
-  }, {
-    sortAttrs: true
-  }, {
-    removeDimensions: false
-  }, {
-    removeStyleElement: true
-  }, {
-    removeScriptElement: true
-  }]
-})
 
 export default async function (
   buildName: types.buildName,
@@ -222,7 +140,7 @@ export default async function (
       }
     }
 
-    const value = await svgoInstance.optimize(xmlJs.js2xml(layer.xml))
+    const value = await svgo.optimize(xmlJs.js2xml(layer.xml))
     const optimized = xmlJs.xml2js(value.data) as xmlJs.Element
     escapeAttributes(optimized)
     if (!optimized.elements) {
