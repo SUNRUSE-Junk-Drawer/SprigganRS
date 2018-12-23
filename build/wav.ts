@@ -116,9 +116,6 @@ export default async function (
     }
   }
 
-  // todo: use backticks
-  // todo: check whether channels are identical and monoify if so
-
   const output: {
     [path: string]: {
       readonly type: `audio`
