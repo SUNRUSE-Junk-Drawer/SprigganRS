@@ -19,16 +19,7 @@ export default async function (
   createdOrModifiedFiles: Set<string>,
   buildName: types.buildName,
   gameName: string,
-  metadata: {
-    name: string
-    readonly description: string
-    readonly developer: {
-      readonly name: string
-      readonly url: string
-    }
-    readonly width: number
-    readonly height: number
-  }
+  metadata: types.metadata
 ): Promise<void> {
   if (createdOrModifiedFiles.has(paths.srcGameMetadata(gameName))
     || createdOrModifiedFiles.has(paths.srcGameIcon(gameName))) {

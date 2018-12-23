@@ -59,16 +59,7 @@ export async function updated(
     console.log(`Reading "${paths.srcGameMetadata(gameName)}"...`)
     const data = await fsReadFile(paths.srcGameMetadata(gameName), { encoding: `utf8` })
     console.log(`Parsing...`)
-    let metadata: {
-      name: string
-      readonly description: string
-      readonly developer: {
-        readonly name: string
-        readonly url: string
-      }
-      readonly width: number
-      readonly height: number
-    } = JSON.parse(data)
+    let metadata: types.mutable<types.metadata> = JSON.parse(data)
 
     if (buildName == `watch`) {
       metadata.name = `DEVELOPMENT BUILD - ${metadata.name}`
