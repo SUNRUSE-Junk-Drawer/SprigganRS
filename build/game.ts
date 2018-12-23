@@ -6,8 +6,10 @@ import * as types from "./types"
 import * as paths from "./paths"
 import generateHtml from "./generateHtml"
 import * as _package from "./_package"
+import svgo from "./svgo"
 
 const fsReadFile = util.promisify(fs.readFile)
+const fsWriteFile = util.promisify(fs.writeFile)
 const mkdirpPromisified = util.promisify(mkdirp)
 const rimrafPromisified = util.promisify(rimraf)
 
@@ -127,6 +129,13 @@ export async function updated(
       await _package.deleted(buildName, gameName, packageName, audioFormats)
     }
 
+    await minifySvg(
+      newState,
+      createdOrModifiedFiles,
+      paths.srcGameIcon(gameName),
+      paths.distBuildGameIcon(buildName, gameName)
+    )
+
     await generateHtml(
       createdOrModifiedFiles,
       buildName,
@@ -148,6 +157,13 @@ export async function updated(
           }
         }
 
+      await minifySvg(
+        newState,
+        createdOrModifiedFiles,
+        paths.srcGameLocalizationFlag(gameName, newLocalization.name),
+        paths.distBuildGameLocalizationFlag(buildName, gameName, newLocalization.name)
+      )
+
       await generateHtml(
         createdOrModifiedFiles,
         buildName,
@@ -157,6 +173,30 @@ export async function updated(
         newLocalization
       )
     }
+  }
+}
+
+async function minifySvg(
+  newState: types.state,
+  createdOrModifiedFiles: Set<string>,
+  srcFileName: string,
+  distFileName: string
+): Promise<void> {
+  if (!Object.prototype.hasOwnProperty.call(newState.paths, srcFileName)) {
+    throw new Error(`"${srcFileName}" does not exist.`)
+  }
+
+  if (!createdOrModifiedFiles.has(srcFileName)) {
+    console.log(`Skipping regeneration of "${srcFileName}".`)
+  } else {
+    console.log(`Reading "${srcFileName}"...`)
+    const data = await fsReadFile(srcFileName, { encoding: `utf8` })
+
+    console.log(`Compressing...`)
+    const optimized = await svgo.optimize(data)
+
+    console.log(`Writing "${distFileName}"...`)
+    await fsWriteFile(distFileName, optimized.data)
   }
 }
 
