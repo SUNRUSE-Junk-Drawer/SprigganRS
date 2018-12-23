@@ -109,7 +109,7 @@ A JSON file describing that particular game.
 
 ```json
 {
-  "name": "Game Name",
+  "title": "Game Title",
   "description": "Game Description",
   "developer": {
     "name": "Developer Name",
@@ -118,20 +118,19 @@ A JSON file describing that particular game.
   "width": 320,
   "height": 180,
   "defaultLocalization": "en-gb",
-  "localizations": {
-    "en-gb": {
-      "name": "Game Name",
-      "description": "Game Description",
-      "developer": {
-        "name": "Developer Name",
-        "url": "https://example.com"
-      }
+  "localizations": [{
+    "name": "en-gb",
+    "title": "Game Title",
+    "description": "Game Description",
+    "developer": {
+      "name": "Developer Name",
+      "url": "https://example.com"
     }
-  }
+  }]
 }
 ```
 
-#### name
+#### title
 
 Shown as the page title, and when "pinned" to the home screen of a mobile
 device.
@@ -156,12 +155,11 @@ The number of units the "safe zone" is "wide" (see Coordinate Space).
 
 The number of units the "safe zone" is "tall" (see Coordinate Space).
 
-#### defaultLocalization
+#### localizations
 
-The name of the localization to use during a watch build (as only one will be
-built for shorter iteration times).
+Only the first will be used under a watch build to reduce iteration times.
 
-#### localizations.(localization name).name
+#### localizations.(localization name).title
 
 Shown as the page title, and when "pinned" to the home screen of a mobile
 device.

@@ -62,7 +62,7 @@ export async function updated(
     let metadata: types.mutable<types.metadata> = JSON.parse(data)
 
     if (buildName == `watch`) {
-      metadata.name = `DEVELOPMENT BUILD - ${metadata.name}`
+      metadata.title = `DEVELOPMENT BUILD - ${metadata.title}`
     }
 
     if (Object.prototype.hasOwnProperty.call(newState.games, gameName)) {

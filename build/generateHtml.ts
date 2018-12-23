@@ -25,7 +25,7 @@ export default async function (
     || createdOrModifiedFiles.has(paths.srcGameIcon(gameName))) {
     console.log(`Generating favicons...`)
     const response = await favicons(paths.srcGameIcon(gameName), {
-      appName: metadata.name,
+      appName: metadata.title,
       appDescription: metadata.description,
       developerName: metadata.developer.name,
       developerURL: metadata.developer.url,
@@ -82,7 +82,7 @@ export default async function (
     <html>
       <head>
         <meta charset="UTF-8">
-        <title>${metadata.name}</title>
+        <title>${metadata.title}</title>
         <meta name="viewport" content="initial-scale=1, minimum-scale=1, maximum-scale=1, width=device-width, height=device-height, user-scalable=no">
         ${response.html.join(``)}
       </head>

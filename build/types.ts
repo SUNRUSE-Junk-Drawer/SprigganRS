@@ -1,5 +1,5 @@
 export interface metadata {
-  readonly name: string
+  readonly title: string
   readonly description: string
   readonly developer: {
     readonly name: string
@@ -7,17 +7,15 @@ export interface metadata {
   }
   readonly width: number
   readonly height: number
-  readonly defaultLocalization: string
   readonly localizations: {
-    readonly [name: string]: {
+    readonly name: string
+    readonly title: string
+    readonly description: string
+    readonly developer: {
       readonly name: string
-      readonly description: string
-      readonly developer: {
-        readonly name: string
-        readonly url: string
-      }
+      readonly url: string
     }
-  }
+  }[]
 }
 
 export type mutable<T> = { -readonly [P in keyof T]-?: mutable<T[P]> }

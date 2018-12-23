@@ -13,7 +13,7 @@ const fsReaddir = util.promisify(fs.readdir)
 const mkdirpPromisified = util.promisify(mkdirp)
 const rimrafPromisified = util.promisify(rimraf)
 
-const stateVersion = 15
+const stateVersion = 16
 
 export default async (
   allPaths: { [path: string]: number },
