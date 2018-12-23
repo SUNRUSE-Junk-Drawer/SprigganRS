@@ -56,20 +56,35 @@ export async function updated(
         .filter(path => !Object.prototype.hasOwnProperty.call(newState.paths, path))
     )
     const changedFiles = new Set([...createdOrModifiedFiles, ...deletedFiles])
+
+    const oldMetadata: types.metadata = Object.prototype.hasOwnProperty.call(oldState.games, gameName)
+      ? oldState.games[gameName].metadata
+      : {
+        title: ``,
+        description: ``,
+        developer: {
+          name: ``,
+          url: ``
+        },
+        width: 0,
+        height: 0,
+        localizations: []
+      }
+
     console.log(`Reading "${paths.srcGameMetadata(gameName)}"...`)
     const data = await fsReadFile(paths.srcGameMetadata(gameName), { encoding: `utf8` })
     console.log(`Parsing...`)
-    let metadata: types.mutable<types.metadata> = JSON.parse(data)
+    let newMetadata: types.mutable<types.metadata> = JSON.parse(data)
 
     if (buildName == `watch`) {
-      metadata.title = `DEVELOPMENT BUILD - ${metadata.title}`
+      newMetadata.title = `DEVELOPMENT BUILD - ${newMetadata.title}`
     }
 
     if (Object.prototype.hasOwnProperty.call(newState.games, gameName)) {
-      newState.games[gameName].metadata = metadata
+      newState.games[gameName].metadata = newMetadata
     } else {
       newState.games[gameName] = {
-        metadata: metadata
+        metadata: newMetadata
       }
     }
 
@@ -104,8 +119,10 @@ export async function updated(
     await generateHtml(
       createdOrModifiedFiles,
       buildName,
-      gameName,
-      metadata
+      paths.srcGameIcon(gameName),
+      paths.distBuildGame(buildName, gameName),
+      oldMetadata,
+      newMetadata
     )
   }
 }

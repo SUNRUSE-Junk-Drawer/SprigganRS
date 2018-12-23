@@ -1,5 +1,6 @@
 import * as util from "util"
 import * as fs from "fs"
+import * as path from "path"
 import * as faviconsType from "favicons"
 const favicons = util.promisify(require(`favicons`) as (
   source: string,
@@ -11,24 +12,38 @@ const pngcrushBin = require(`pngcrush-bin`)
 const execBuffer = require(`exec-buffer`)
 import * as htmlMinifier from "html-minifier"
 import * as types from "./types"
-import * as paths from "./paths"
 
 const fsWriteFile = util.promisify(fs.writeFile)
+
+type htmlMetadata = {
+  readonly title: string
+  readonly description: string
+  readonly developer: {
+    readonly name: string
+    readonly url: string
+  }
+}
 
 export default async function (
   createdOrModifiedFiles: Set<string>,
   buildName: types.buildName,
-  gameName: string,
-  metadata: types.metadata
+  iconPath: string,
+  destination: string,
+  oldMetadata: htmlMetadata,
+  newMetadata: htmlMetadata
 ): Promise<void> {
-  if (createdOrModifiedFiles.has(paths.srcGameMetadata(gameName))
-    || createdOrModifiedFiles.has(paths.srcGameIcon(gameName))) {
+  if (createdOrModifiedFiles.has(iconPath)
+    || newMetadata.title != oldMetadata.title
+    || newMetadata.description != oldMetadata.description
+    || newMetadata.developer.name != oldMetadata.developer.name
+    || newMetadata.developer.url != oldMetadata.developer.url
+  ) {
     console.log(`Generating favicons...`)
-    const response = await favicons(paths.srcGameIcon(gameName), {
-      appName: metadata.title,
-      appDescription: metadata.description,
-      developerName: metadata.developer.name,
-      developerURL: metadata.developer.url,
+    const response = await favicons(iconPath, {
+      appName: newMetadata.title,
+      appDescription: newMetadata.description,
+      developerName: newMetadata.developer.name,
+      developerURL: newMetadata.developer.url,
       background: `#000`,
       theme_color: `#000`,
       path: ``,
@@ -66,7 +81,7 @@ export default async function (
       }
       console.log(`Writing favicon file "${file.name}" (compressed ${++compressed}/written ${written}/total ${total})...`)
       await fsWriteFile(
-        paths.distBuildGameFile(buildName, gameName, file.name),
+        path.join(destination, file.name),
         file.contents
       )
 
@@ -82,7 +97,7 @@ export default async function (
     <html>
       <head>
         <meta charset="UTF-8">
-        <title>${metadata.title}</title>
+        <title>${newMetadata.title}</title>
         <meta name="viewport" content="initial-scale=1, minimum-scale=1, maximum-scale=1, width=device-width, height=device-height, user-scalable=no">
         ${response.html.join(``)}
       </head>
@@ -136,9 +151,10 @@ export default async function (
         useShortDoctype: true
       })
     }
-    console.log(`Writing "${paths.distBuildGameHtml(buildName, gameName)}"...`)
+
+    console.log(`Writing "${path.join(destination, `index.html`)}"...`)
     await fsWriteFile(
-      paths.distBuildGameHtml(buildName, gameName),
+      path.join(destination, `index.html`),
       html
     )
   } else {
