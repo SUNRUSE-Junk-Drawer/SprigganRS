@@ -43,8 +43,6 @@ const libVorbisJs: {
 const fsReadFile = util.promisify(fs.readFile)
 
 export default async function (
-  oldState: types.state,
-  newState: types.state,
   buildName: types.buildName,
   gameName: string,
   packageName: string,

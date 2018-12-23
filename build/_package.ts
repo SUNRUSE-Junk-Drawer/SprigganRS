@@ -51,11 +51,11 @@ export async function updated(
     .filter(fileName => !newFileNames.has(fileName))
 
   for (const fileName of createdFiles) {
-    await file.created(oldState, newState, buildName, gameName, packageName, paths.extractSrcGamePackageFileName(fileName), paths.extractSrcGamePackageFileExtension(fileName), audioFormats)
+    await file.created(buildName, gameName, packageName, paths.extractSrcGamePackageFileName(fileName), paths.extractSrcGamePackageFileExtension(fileName), audioFormats)
   }
 
   for (const fileName of updatedFiles) {
-    await file.updated(oldState, newState, buildName, gameName, packageName, paths.extractSrcGamePackageFileName(fileName), paths.extractSrcGamePackageFileExtension(fileName), audioFormats)
+    await file.updated(buildName, gameName, packageName, paths.extractSrcGamePackageFileName(fileName), paths.extractSrcGamePackageFileExtension(fileName), audioFormats)
   }
 
   for (const fileName of deletedFiles) {
