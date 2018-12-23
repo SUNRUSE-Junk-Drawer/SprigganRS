@@ -40,7 +40,7 @@ The coordinate space is a number of "units" wide (X) and tall (Y) (defined in th
 |       |'- index.html
 |       |'- icon.svg
 |        '- (localization name)
-|           |'- icon.svg
+|           |'- flag.svg
 |           |'- index.html
 |           |'- index.js
 |            '- (package name)-(audio format).txt
