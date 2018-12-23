@@ -128,6 +128,7 @@ export async function updated(
 }
 
 export async function deleted(
+  newState: types.mutable<types.state>,
   buildName: types.buildName,
   gameName: string
 ): Promise<void> {
@@ -136,6 +137,8 @@ export async function deleted(
 
   console.log(`Deleting "${paths.distBuildGame(buildName, gameName)}"...`)
   await rimrafPromisified(paths.distBuildGame(buildName, gameName))
+
+  delete newState.games[gameName]
 }
 
 function packageNames(

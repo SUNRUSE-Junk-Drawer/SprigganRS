@@ -117,7 +117,7 @@ export default async (
     for (const gameName of Array
       .from(oldGameNames)
       .filter(gameName => !newGameNames.has(gameName))) {
-      await game.deleted(buildName, gameName)
+      await game.deleted(newState, buildName, gameName)
     }
 
     console.log(`Writing "${paths.tempBuildState(buildName)}" to mark build done...`)
