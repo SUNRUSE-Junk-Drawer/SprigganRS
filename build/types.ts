@@ -14,7 +14,7 @@ export type mutable<T> = { -readonly [P in keyof T]-?: T[P] }
 export interface state {
   readonly version: number
   readonly paths: {
-    [path: string]: number
+    readonly [path: string]: number
   }
 }
 
