@@ -88,6 +88,17 @@ export async function updated(
       }
     }
 
+    const oldLocalizationNames = oldMetadata.localizations.map(localization => localization.name)
+    const newLocalizationNames = newMetadata.localizations.map(localization => localization.name)
+    for (const localizationName of oldLocalizationNames.filter(localizationName => !newLocalizationNames.includes(localizationName))) {
+      console.log(`Deleting "${paths.distBuildGameLocalization(buildName, gameName, localizationName)}"...`)
+      await rimrafPromisified(paths.distBuildGameLocalization(buildName, gameName, localizationName))
+    }
+    for (const localizationName of newLocalizationNames.filter(localizationName => !oldLocalizationNames.includes(localizationName))) {
+      console.log(`Creating "${paths.distBuildGameLocalization(buildName, gameName, localizationName)}"...`)
+      await mkdirpPromisified(paths.distBuildGameLocalization(buildName, gameName, localizationName))
+    }
+
     const oldPackageNames = packageNames(oldState, gameName)
     const newPackageNames = packageNames(newState, gameName)
 
@@ -124,6 +135,28 @@ export async function updated(
       oldMetadata,
       newMetadata
     )
+
+    for (const newLocalization of newMetadata.localizations) {
+      const oldLocalization = oldMetadata
+        .localizations
+        .find(oldLocalization => oldLocalization.name == newLocalization.name) || {
+          title: ``,
+          description: ``,
+          developer: {
+            name: ``,
+            url: ``
+          }
+        }
+
+      await generateHtml(
+        createdOrModifiedFiles,
+        buildName,
+        paths.srcGameLocalizationIcon(gameName, newLocalization.name),
+        paths.distBuildGameLocalization(buildName, gameName, newLocalization.name),
+        oldLocalization,
+        newLocalization
+      )
+    }
   }
 }
 
