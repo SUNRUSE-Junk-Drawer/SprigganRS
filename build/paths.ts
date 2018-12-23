@@ -29,14 +29,14 @@ export const src = `src`
 export const temp = `temp`
 export const dist = `dist`
 export const srcGame = (gameName: string): string => join(src, `games`, gameName)
-export const isSrcGame = (path: string): null | string => is(/^src\/games\/([^\/]+)\/.+$/i, path)
+export const isSrcGame = (path: string): null | string => is(/^src\/games\/([^\/\.]+)\/.+$/i, path)
 export const srcGameFile = (gameName: string, fileName: string): string => join(srcGame(gameName), fileName)
 export const srcGameMetadata = (gameName: string): string => srcGameFile(gameName, `metadata.json`)
 export const srcGameIcon = (gameName: string): string => srcGameFile(gameName, `icon.svg`)
 export const srcGamePackageFile = (gameName: string, packageName: string, fileName: string, fileExtension: string): string => join(srcGame(gameName), `packages`, packageName, `${fileName}.${fileExtension}`)
-export const isSrcGamePackage = (path: string): null | string => is(/^src\/games\/[^\/]+\/packages\/([^\/]+)\/.+$/i, path)
-export const extractSrcGamePackageFileName = (path: string): string => extract(/^src\/games\/[^\/]+\/packages\/[^\/]+\/(.+)\..+$/i, path)
-export const extractSrcGamePackageFileExtension = (path: string): string => extract(/^src\/games\/[^\/]+\/packages\/[^\/]+\/.+\.(.+)$/i, path)
+export const isSrcGamePackage = (path: string): null | string => is(/^src\/games\/[^\/\.]+\/packages\/([^\/\.]+)\/[^\/\.]+\.[^\/\.]+$/i, path)
+export const extractSrcGamePackageFileName = (path: string): string => extract(/^src\/games\/[^\/\.]+\/packages\/[^\/\.]+\/([^\/\.]+)\.[^\/\.]+$/i, path)
+export const extractSrcGamePackageFileExtension = (path: string): string => extract(/^src\/games\/[^\/\.]+\/packages\/[^\/\.]+\/[^\/\.]+\.([^\/\.]+)$/i, path)
 export const tempBuild = (buildName: types.buildName): string => join(temp, buildName)
 export const tempBuildState = (buildName: types.buildName): string => join(tempBuild(buildName), `state.json`)
 export const tempBuildGame = (buildName: types.buildName, gameName: string): string => join(tempBuild(buildName), `games`, gameName)
