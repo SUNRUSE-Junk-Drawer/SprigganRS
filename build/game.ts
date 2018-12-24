@@ -142,7 +142,15 @@ export async function updated(
       paths.srcGameIcon(gameName),
       paths.distBuildGame(buildName, gameName),
       oldMetadata,
-      newMetadata
+      newMetadata,
+      `<body style="background: black; position: fixed; left: 50%; top: 50%; width: 100%; transform: translate(-50%, -50%); text-align: center; font-size: 0; margin: 0;">
+          <img src="icon.svg" alt="${escapeHtml(newMetadata.title)}" style="width: 35vmin; height: 35vmin; margin: 2.5vmin;">
+          <div>
+            ${newMetadata.localizations.map(localization => `<a href="${escapeHtml(localization.name)}">
+              <img src="${localization.name}/flag.svg" alt="${escapeHtml(localization.name)}" style="width: 24vmin; height: 24vmin; margin: 2.5vmin;">
+            </a>`).join(``)}
+        </div>
+      </body>`
     )
 
     for (const newLocalization of newMetadata.localizations) {
@@ -170,7 +178,11 @@ export async function updated(
         paths.srcGameLocalizationIcon(gameName, newLocalization.name),
         paths.distBuildGameLocalization(buildName, gameName, newLocalization.name),
         oldLocalization,
-        newLocalization
+        newLocalization,
+        `<body style="background: black; color: white;">
+          <div id="message" style="position: fixed; font-family: sans-serif; font-size: 0.5cm; top: 50%; line-height: 0.5cm; transform: translateY(-50%); left: 0; right: 0; text-align: center;">Loading; please ensure that JavaScript is enabled.</div>
+          <script src="index.js"></script>
+        </body>`
       )
     }
   }
@@ -225,4 +237,15 @@ function packageNames(
       .map(paths.isSrcGamePackage)
       .filter((packageName: null | string): packageName is string => !!packageName)
   )
+}
+
+function escapeHtml(text: string): string {
+  // Based on https://www.owasp.org/index.php/XSS_(Cross_Site_Scripting)_Prevention_Cheat_Sheet#RULE_.231_-_HTML_Escape_Before_Inserting_Untrusted_Data_into_HTML_Element_Content
+  return text
+    .replace(/&/g, `&amp;`)
+    .replace(/</g, `&lt;`)
+    .replace(/>/g, `&gt;`)
+    .replace(/"/g, `&quot;`)
+    .replace(/'/g, `&#39;`)
+    .replace(/\//g, `&#47;`)
 }

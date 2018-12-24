@@ -30,7 +30,8 @@ export default async function (
   iconPath: string,
   destination: string,
   oldMetadata: htmlMetadata,
-  newMetadata: htmlMetadata
+  newMetadata: htmlMetadata,
+  body: string
 ): Promise<void> {
   if (createdOrModifiedFiles.has(iconPath)
     || newMetadata.title != oldMetadata.title
@@ -101,10 +102,7 @@ export default async function (
         <meta name="viewport" content="initial-scale=1, minimum-scale=1, maximum-scale=1, width=device-width, height=device-height, user-scalable=no">
         ${response.html.join(``)}
       </head>
-      <body style="background: black; color: white;">
-        <div id="message" style="position: fixed; font-family: sans-serif; font-size: 0.5cm; top: 50%; line-height: 0.5cm; transform: translateY(-50%); left: 0; right: 0; text-align: center;">Loading; please ensure that JavaScript is enabled.</div>
-        <script src="index.js"></script>
-      </body>
+      ${body}
     </html>`
     if (buildName == `oneOff`) {
       html = htmlMinifier.minify(html, {
