@@ -95,6 +95,8 @@ export async function updated(
     for (const localizationName of oldLocalizationNames.filter(localizationName => !newLocalizationNames.includes(localizationName))) {
       console.log(`Deleting "${paths.distBuildGameLocalization(buildName, gameName, localizationName)}"...`)
       await rimrafPromisified(paths.distBuildGameLocalization(buildName, gameName, localizationName))
+      console.log(`Deleting "${paths.tempBuildGameLocalization(buildName, gameName, localizationName)}"...`)
+      await rimrafPromisified(paths.tempBuildGameLocalization(buildName, gameName, localizationName))
     }
     for (const localizationName of newLocalizationNames.filter(localizationName => !oldLocalizationNames.includes(localizationName))) {
       console.log(`Creating "${paths.distBuildGameLocalization(buildName, gameName, localizationName)}"...`)
@@ -111,7 +113,7 @@ export async function updated(
     const updatedPackages = Array
       .from(newPackageNames)
       .filter(packageName => oldPackageNames.has(packageName))
-      .filter(packageName => Array.from(changedFiles).map(paths.isSrcGamePackage).includes(packageName))
+      .filter(packageName => changedFiles.has(paths.srcGameMetadata(gameName)) || Array.from(changedFiles).map(paths.isSrcGamePackage).includes(packageName))
 
     const deletedPackages = Array
       .from(oldPackageNames)
@@ -126,7 +128,7 @@ export async function updated(
     }
 
     for (const packageName of deletedPackages) {
-      await _package.deleted(buildName, gameName, packageName, audioFormats)
+      await _package.deleted(buildName, gameName, oldLocalizationNames, packageName, audioFormats)
     }
 
     await minifySvg(

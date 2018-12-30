@@ -12,6 +12,7 @@ export default async function (
   gameName: string,
   packageName: string,
   fileName: string,
+  fileLocalization: null | string,
   audioFormats: types.audioFormat[]
 ): Promise<{
   [path: string]: {
@@ -26,9 +27,9 @@ export default async function (
     readonly data: string
   }
 }> {
-  console.log(`Reading "${paths.srcGamePackageFile(gameName, packageName, fileName, `svg`)}"...`)
-  const data = await fsReadFile(paths.srcGamePackageFile(gameName, packageName, fileName, `svg`), { encoding: `utf8` })
-  console.log(`Parsing "${paths.srcGamePackageFile(gameName, packageName, fileName, `svg`)}"...`)
+  console.log(`Reading "${paths.srcGamePackageFile(gameName, packageName, fileName, fileLocalization, `svg`)}"...`)
+  const data = await fsReadFile(paths.srcGamePackageFile(gameName, packageName, fileName, fileLocalization, `svg`), { encoding: `utf8` })
+  console.log(`Parsing "${paths.srcGamePackageFile(gameName, packageName, fileName, fileLocalization, `svg`)}"...`)
   const xml: xmlJs.Element = xmlJs.xml2js(data) as xmlJs.Element
   if (!xml.elements) {
     throw new Error(`The file contains no elements.`)
@@ -55,7 +56,7 @@ export default async function (
     readonly xml: xmlJs.Element
   }[] = []
   if (isInkscape && layers.length > 1) {
-    console.log(`Splitting "${paths.srcGamePackageFile(gameName, packageName, fileName, `svg`)}" by Inkscape layer...`)
+    console.log(`Splitting "${paths.srcGamePackageFile(gameName, packageName, fileName, fileLocalization, `svg`)}" by Inkscape layer...`)
     layers
       .forEach(layer => {
         const layerXml: xmlJs.Element = JSON.parse(JSON.stringify(xml))
@@ -101,9 +102,9 @@ export default async function (
       })
   } else {
     if (isInkscape) {
-      console.log(`"${paths.srcGamePackageFile(gameName, packageName, fileName, `svg`)}" is from Inkscape, but has only one layer; it will not be split.`)
+      console.log(`"${paths.srcGamePackageFile(gameName, packageName, fileName, fileLocalization, `svg`)}" is from Inkscape, but has only one layer; it will not be split.`)
     } else {
-      console.log(`"${paths.srcGamePackageFile(gameName, packageName, fileName, `svg`)}" is not from Inkscape; it will not be split.`)
+      console.log(`"${paths.srcGamePackageFile(gameName, packageName, fileName, fileLocalization, `svg`)}" is not from Inkscape; it will not be split.`)
     }
     effectiveLayers.push({
       name: fileName,
@@ -120,7 +121,7 @@ export default async function (
   } = {}
 
   for (const layer of effectiveLayers) {
-    console.log(`Compressing "${paths.srcGamePackageFile(gameName, packageName, fileName, `svg`)}" (${Object.keys(generated).length}/${effectiveLayers.length})...`)
+    console.log(`Compressing "${paths.srcGamePackageFile(gameName, packageName, fileName, fileLocalization, `svg`)}" (${Object.keys(generated).length}/${effectiveLayers.length})...`)
     // Workaround for https://github.com/nashwaan/xml-js/issues/69.
     escapeAttributes(layer.xml)
 

@@ -17,6 +17,7 @@ const extensions: {
     gameName: string,
     packageName: string,
     fileName: string,
+    fileLocalization: null | string,
     audioFormats: types.audioFormat[]
   ) => Promise<{
     [path: string]: {
@@ -38,10 +39,11 @@ export async function created(
   gameName: string,
   packageName: string,
   fileName: string,
+  fileLocalization: null | string,
   fileExtension: string,
   audioFormats: types.audioFormat[]
 ): Promise<void> {
-  await performCreation(buildName, gameName, packageName, fileName, fileExtension, audioFormats)
+  await performCreation(buildName, gameName, packageName, fileName, fileLocalization, fileExtension, audioFormats)
 }
 
 export async function updated(
@@ -49,11 +51,12 @@ export async function updated(
   gameName: string,
   packageName: string,
   fileName: string,
+  fileLocalization: null | string,
   fileExtension: string,
   audioFormats: types.audioFormat[]
 ): Promise<void> {
-  await performDeletion(buildName, gameName, packageName, fileName, fileExtension)
-  await performCreation(buildName, gameName, packageName, fileName, fileExtension, audioFormats)
+  await performDeletion(buildName, gameName, packageName, fileName, fileLocalization, fileExtension)
+  await performCreation(buildName, gameName, packageName, fileName, fileLocalization, fileExtension, audioFormats)
 }
 
 export async function deleted(
@@ -61,9 +64,10 @@ export async function deleted(
   gameName: string,
   packageName: string,
   fileName: string,
+  fileLocalization: null | string,
   fileExtension: string
 ): Promise<void> {
-  await performDeletion(buildName, gameName, packageName, fileName, fileExtension)
+  await performDeletion(buildName, gameName, packageName, fileName, fileLocalization, fileExtension)
 }
 
 async function performDeletion(
@@ -71,10 +75,11 @@ async function performDeletion(
   gameName: string,
   packageName: string,
   fileName: string,
+  fileLocalization: null | string,
   fileExtension: string
 ): Promise<void> {
-  console.log(`Deleting "${paths.tempBuildGamePackageFile(buildName, gameName, packageName, fileName, fileExtension)}"...`)
-  await rimrafPromisified(paths.tempBuildGamePackageFile(buildName, gameName, packageName, fileName, fileExtension))
+  console.log(`Deleting "${paths.tempBuildGamePackageFile(buildName, gameName, packageName, fileName, fileLocalization, fileExtension)}"...`)
+  await rimrafPromisified(paths.tempBuildGamePackageFile(buildName, gameName, packageName, fileName, fileLocalization, fileExtension))
 }
 
 async function performCreation(
@@ -82,22 +87,23 @@ async function performCreation(
   gameName: string,
   packageName: string,
   fileName: string,
+  fileLocalization: null | string,
   fileExtension: string,
   audioFormats: types.audioFormat[]
 ): Promise<void> {
-  console.log(`Creating "${paths.tempBuildGamePackageFile(buildName, gameName, packageName, fileName, fileExtension)}"...`)
-  await mkdirpPromisified(paths.tempBuildGamePackageFile(buildName, gameName, packageName, fileName, fileExtension))
+  console.log(`Creating "${paths.tempBuildGamePackageFile(buildName, gameName, packageName, fileName, fileLocalization, fileExtension)}"...`)
+  await mkdirpPromisified(paths.tempBuildGamePackageFile(buildName, gameName, packageName, fileName, fileLocalization, fileExtension))
   if (Object.prototype.hasOwnProperty.call(extensions, fileExtension)) {
-    const generated = await extensions[fileExtension](buildName, gameName, packageName, fileName, audioFormats)
-    console.log(`Writing "${paths.tempBuildGamePackageFileCache(buildName, gameName, packageName, fileName, fileExtension)}"...`)
+    const generated = await extensions[fileExtension](buildName, gameName, packageName, fileName, fileLocalization, audioFormats)
+    console.log(`Writing "${paths.tempBuildGamePackageFileCache(buildName, gameName, packageName, fileName, fileLocalization, fileExtension)}"...`)
     await fsWriteFile(
-      paths.tempBuildGamePackageFileCache(buildName, gameName, packageName, fileName, fileExtension),
+      paths.tempBuildGamePackageFileCache(buildName, gameName, packageName, fileName, fileLocalization, fileExtension),
       JSON.stringify(generated)
     )
   } else {
-    console.warn(`Unknown file extension "${fileExtension}" for "${paths.srcGamePackageFile(gameName, packageName, fileName, fileExtension)}".`)
+    console.warn(`Unknown file extension "${fileExtension}" for "${paths.srcGamePackageFile(gameName, packageName, fileName, fileLocalization, fileExtension)}".`)
     await fsWriteFile(
-      paths.tempBuildGamePackageFileCache(buildName, gameName, packageName, fileName, fileExtension),
+      paths.tempBuildGamePackageFileCache(buildName, gameName, packageName, fileName, fileLocalization, fileExtension),
       JSON.stringify({})
     )
   }

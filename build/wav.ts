@@ -47,6 +47,7 @@ export default async function (
   gameName: string,
   packageName: string,
   fileName: string,
+  fileLocalization: string,
   audioFormats: types.audioFormat[]
 ): Promise<{
   [path: string]: {
@@ -61,16 +62,16 @@ export default async function (
     readonly data: string
   }
 }> {
-  console.log(`Reading "${paths.srcGamePackageFile(gameName, packageName, fileName, `svg`)}"...`)
-  const data = await fsReadFile(paths.srcGamePackageFile(gameName, packageName, fileName, `wav`))
-  console.log(`Decoding "${paths.srcGamePackageFile(gameName, packageName, fileName, `svg`)}"...`)
+  console.log(`Reading "${paths.srcGamePackageFile(gameName, packageName, fileName, fileLocalization, `svg`)}"...`)
+  const data = await fsReadFile(paths.srcGamePackageFile(gameName, packageName, fileName, fileLocalization, `wav`))
+  console.log(`Decoding "${paths.srcGamePackageFile(gameName, packageName, fileName, fileLocalization, `svg`)}"...`)
   const wav = nodeWav.decode(data)
 
   console.log(`Checking format...`)
-  if (wav.sampleRate != 44100) throw new Error(`File "${paths.srcGamePackageFile(gameName, packageName, fileName, `svg`)}" uses a sample rate of ${wav.sampleRate}; 44100 was expected.`)
+  if (wav.sampleRate != 44100) throw new Error(`File "${paths.srcGamePackageFile(gameName, packageName, fileName, fileLocalization, `svg`)}" uses a sample rate of ${wav.sampleRate}; 44100 was expected.`)
 
-  if (wav.channelData.length < 1) throw new Error(`File "${paths.srcGamePackageFile(gameName, packageName, fileName, `svg`)}" contains no audio channels.`)
-  if (wav.channelData.length > 2) throw new Error(`File "${paths.srcGamePackageFile(gameName, packageName, fileName, `svg`)}" contains more than two audio channels.`)
+  if (wav.channelData.length < 1) throw new Error(`File "${paths.srcGamePackageFile(gameName, packageName, fileName, fileLocalization, `svg`)}" contains no audio channels.`)
+  if (wav.channelData.length > 2) throw new Error(`File "${paths.srcGamePackageFile(gameName, packageName, fileName, fileLocalization, `svg`)}" contains more than two audio channels.`)
 
   console.log(`Checking gain...`)
   let gain = 0.0
