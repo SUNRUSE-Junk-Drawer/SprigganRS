@@ -1,10 +1,30 @@
 {
-  "name": "SprigganRS Example",
-  "description": "An example game created with SprigganRS",
+  "title": "SprigganRS Example (Localization Menu)",
+  "description": "The localization selector for an example game created with SprigganRS",
   "developer": {
     "name": "SUNRUSE",
     "url": "https://sunruse.co.uk"
   },
   "width": 428,
-  "height": 240
+  "height": 240,
+  "localizations": [
+    {
+      "name": "en-gb",
+      "title": "SprigganRS Example",
+      "description": "An example game created with SprigganRS",
+      "developer": {
+        "name": "SUNRUSE",
+        "url": "https://sunruse.co.uk?en-gb"
+      }
+    },
+    {
+      "name": "fr-fr",
+      "title": "SprigganRS Example (French)",
+      "description": "An example game created with SprigganRS (French)",
+      "developer": {
+        "name": "SUNRUSE",
+        "url": "https://sunruse.co.uk?fr-fr"
+      }
+    }
+  ]
 }

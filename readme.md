@@ -1,6 +1,8 @@
 # SprigganRS
 A "reactive" event-driven web game engine.
 
+Currently early in development.
+
 ## Architecture
 ```
                .-> video
@@ -29,23 +31,172 @@ The coordinate space is a number of "units" wide (X) and tall (Y) (defined in th
 
 ```
 
-## Variables
+## Project Structure
 
-| Name    | Initialization | Views     | Callbacks  |
-|---------|----------------|-----------|------------|
-| state   | Read/write     | Read-only | Read/write |
-| content | Read-only      | Read-only | Read-only  |
-| borders | No             | Read-only | No         |
+```
+|'- dist
+|   |'- (game name).zip
+|    '- (game name)
+|       |'- index.html
+|       |'- icon.svg
+|        '- (localization name)
+|           |'- flag.svg
+|           |'- index.html
+|           |'- index.js
+|            '- (package name)-(audio format).txt
+ '- src
+    |'- engine
+    |   |'- header/index.ts
+    |   |'- index.ts
+    |    '- footer/index.ts
+     '- (game name)
+        |'- metadata.json
+        |'- localizations
+        |   '- icon.svg
+        |   '- flag.svg
+        |'- icon.svg
+        |'- index.ts
+         '- packages
+            '- (package name)
+               |'- *.svg
+               |'- *.wav
+                '- *
+                   |'- (localization name).svg
+                    '- (localization name).wav
+```
 
-### state
+### dist/(game name).zip
 
-The JSON-serializable game state.
-Initially an empty anonymous object.
+A zip file containing every part of the corresponding game, minfied, but not
+including debugging tools.  Only produced by "one-off" builds.
 
-### content
+### dist/(game name)
 
-Any files considered content are stored inside an object.  Filenames are split
-by slashes to form hierarchy:
+A directory containing every part of the corresponding game, including debugging
+tools, without much in the way of minification.  Only produced by "watch"
+builds.
+
+### src/engine/header/index.ts
+
+The entry point for the "header" of the engine, included in every game.  This is
+responsible for:
+
+- Error handling.
+- Content types.
+
+### src/engine/index.ts
+
+The entry point for the "body" of the engine, included in every game.  This is
+the runtime engine.  It is responsible for:
+
+- Timing.
+- DOM manipulation.
+- Input.
+- Save/load.
+- Debugging tools.
+- State management.
+
+### src/engine/header/index.ts
+
+The entry point for the "footer" of the engine, included in every game.  This is
+responsible for:
+
+- Starting the game once all JavaScript has been loaded.
+
+### src/games/(game name)/metadata.json
+
+A JSON file describing that particular game.
+
+```json
+{
+  "title": "Game Title",
+  "description": "Game Description",
+  "developer": {
+    "name": "Developer Name",
+    "url": "https://example.com"
+  },
+  "width": 320,
+  "height": 180,
+  "defaultLocalization": "en-gb",
+  "localizations": [{
+    "name": "en-gb",
+    "title": "Game Title",
+    "description": "Game Description",
+    "developer": {
+      "name": "Developer Name",
+      "url": "https://example.com"
+    }
+  }]
+}
+```
+
+#### title
+
+Shown as the page title, and when "pinned" to the home screen of a mobile
+device.
+
+#### description
+
+A short description of the game, included in metadata.
+
+#### developer.name
+
+The name of the developer of the game, included in metadata.
+
+#### developer.url
+
+The URL of the developer of the game, included in metadata.
+
+#### width
+
+The number of units the "safe zone" is "wide" (see Coordinate Space).
+
+#### width
+
+The number of units the "safe zone" is "tall" (see Coordinate Space).
+
+#### localizations
+
+Only the first will be used under a watch build to reduce iteration times.
+
+#### localizations.(localization name).title
+
+Shown as the page title, and when "pinned" to the home screen of a mobile
+device.
+
+#### localizations.(localization name).description
+
+A short description of the game, included in metadata.
+
+#### localizations.(localization name).developer.name
+
+The name of the developer of the game, included in metadata.
+
+#### localizations.(localization name).developer.url
+
+The URL of the developer of the game, included in metadata.
+
+### src/games/(game name)/localizations/(localization name)/flag.svg
+
+An icon to use under this localization; shown as a favicon, splash screen and
+when "pinned" to the home screen of a mobile devce.  Expected to be square.
+
+### src/games/(game name)/localizations/(localization name)/flag.svg
+
+An icon for this localization; shown on the localization menu.  Expected to be
+square.
+
+### src/games/(game name)/icon.svg
+
+An icon to use; shown as a favicon, splash screen and when "pinned" to the home
+screen of a mobile devce.  Expected to be square.
+
+### src/games/(game name)/packages/(package name)
+
+Each folder forms a "package", which is a collection of content which is loaded
+as a unit.
+
+Filenames are split by slashes to form a hierarchy:
 
 - `a/b/c/d`
 - `e/f/g/h`
@@ -85,364 +236,21 @@ a slash inside a folder:
 | `fonts\default\/` | fonts | default | /   |
 | `fonts\default\\` | fonts | default | \   |
 
-### borders
+### src/games/(game name)/packages/(package name)/*/(localization name).*
 
-Contains the borders of the page, in scene graph coordinates.
+Subdirectories in packages represent content which varies by localization.  For
+instance:
 
-```js
-/* Assuming that the page is wider than the configured 320x180 "safe zone". */
-console.log(borders.left)   /* -4.78 */
-console.log(borders.right)  /* 324.78 */
-console.log(borders.top)    /* 0 */
-console.log(borders.bottom) /* 180 */
-```
+| Path                                               | Localization Name | Imported as though                           |
+|----------------------------------------------------|-------------------|----------------------------------------------|
+| src/games/example/packages/menu/strings/en-gb.json | en-gb             | src/games/example/packages/menu/strings.json |
+| src/games/example/packages/menu/strings/fr-fr.json | fr-fr             | src/games/example/packages/menu/strings.json |
 
-## Functions
+### src/games/(game name)/package/(package name)/*[/(localization name)].svg
 
-| Name         | Initialization | Views | Callbacks |
-|--------------|----------------|-------|-----------|
-| view         | Yes            | No    | No        |
-| sprite       | No             | Yes   | No        |
-| move         | No             | Yes   | No        |
-| moveBetween  | No             | Yes   | No        |
-| moveAt       | No             | Yes   | No        |
-| scale        | No             | Yes   | No        |
-| scaleBetween | No             | Yes   | No        |
-| fade         | No             | Yes   | No        |
-| fadeBetween  | No             | Yes   | No        |
-| click        | No             | Yes   | No        |
-| at           | No             | Yes   | No        |
-| batch        | Yes            | No    | Yes       |
-| pause        | Yes            | No    | Yes       |
-| resume       | Yes            | No    | Yes       |
-
-### View
-
-Defines a new view "pass"/"layer".
-
-```js
-var viewReference = view("View Name", function() {
-  return aSceneGraph
-})
-```
-
-### Sprite
-
-Draws a specified SVG.
-
-```js
-var sceneGraph = sprite("Object Name", stringContainingSvgWhichWasLikelyImported)
-```
-
-### Move
-
-Translates a child by a given number of units.
-
-```js
-var sceneGraph = move(
-  14, // 14 units right.
-  7,  // 7 units down.
-  childSceneGraph
-)
-```
-
-```js
-var sceneGraph = moveBetween(
-  14, // Linearly interpolate from 14 units right.
-  7,  // Linearly interpolate from 7 units down.
-  11, // Linearly interpolate to 11 units right.
-  29, // Linearly interpolate to 29 units down.
-  46, // Start moving at 46 seconds of elapsed time.
-  72, // Stop moving at 72 seconds of elapsed time.
-  childSceneGraph
-)
-```
-
-```js
-var sceneGraph = moveBetween(
-  14, // Linearly interpolate from 14 units right.
-  7,  // Linearly interpolate from 7 units down.
-  11, // Linearly interpolate to 11 units right.
-  29, // Linearly interpolate to 29 units down.
-  46, // Start moving at 46 seconds of elapsed time.
-  72, // Stop moving at 72 seconds of elapsed time.
-  childSceneGraph,
-  function() { /* Executed at 72 seconds of elapsed time. */ }
-)
-```
-
-```js
-var sceneGraph = moveBetween(
-  14, // Linearly interpolate from 14 units right.
-  7,  // Linearly interpolate from 7 units down.
-  11, // Linearly interpolate to 11 units right.
-  29, // Linearly interpolate to 29 units down.
-  46, // Start moving at 46 seconds of elapsed time.
-  2,  // Moves at 2 units per second.
-  childSceneGraph
-)
-```
-
-```js
-var sceneGraph = moveBetween(
-  14, // Linearly interpolate from 14 units right.
-  7,  // Linearly interpolate from 7 units down.
-  11, // Linearly interpolate to 11 units right.
-  29, // Linearly interpolate to 29 units down.
-  46, // Start moving at 46 seconds of elapsed time.
-  2,  // Move at 2 units per second.
-  childSceneGraph,
-  function() { /* Executed on reaching the destination. */ }
-)
-```
-
-Note: if wrapped in a scaling function, the move itself will be scaled:
-
-```js
-// Actually moves 7, 12 units.
-var sceneGraph = scale(0.5, 2, move(14, 6, childSceneGraph))
-```
-
-### Scale
-
-Multiplies the size of a child scene graph by a given factor.
-
-```js
-var sceneGraph = scale(
-  2,   // Double in size horizontally.
-  0.5, // Halve in size vertically.
-  childSceneGraph
-)
-```
-
-```js
-var sceneGraph = scale(
-  2,    // Linearly interpolate from doubling in size horizontally.
-  0.5,  // Linearly interpolate from halving in size vertically.
-  3,    // Linearly interpolate to tripling in size horizontally.
-  0.25, // Linearly interpolate to dividing its size by 4 vertically.
-  46,   // Start scaling at 46 seconds of elapsed time.
-  72,   // Stop scaling at 72 seconds of elapsed time.
-  childSceneGraph
-)
-```
-
-```js
-var sceneGraph = scale(
-  2,    // Linearly interpolate from doubling in size horizontally.
-  0.5,  // Linearly interpolate from halving in size vertically.
-  3,    // Linearly interpolate to tripling in size horizontally.
-  0.25, // Linearly interpolate to dividing its size by 4 vertically.
-  46,   // Start scaling at 46 seconds of elapsed time.
-  72,   // Stop scaling at 72 seconds of elapsed time.
-  childSceneGraph,
-  function() { /* Executed at the end of the scaling. */ }
-)
-```
-
-### Fade
-
-Multiplies the opacity of a child scene graph by a given factor.
-Clamped to 0 and 1 at the time of emitting objects.
-This additionally adjusts the volume of sounds.
-
-```js
-var sceneGraph = fade(
-  0.3, // 30% opacity.
-  childSceneGraph
-)
-```
-
-```js
-var sceneGraph = fadeBetween(
-  0.25, // Linearly interpolate from 25% opacity.
-  0.75, // Linearly interpolate to 75% opacity.
-  46,   // Start fading at 46 seconds of elapsed time.
-  72,   // Stop fading at 72 seconds of elapsed time.
-  childSceneGraph
-)
-```
-
-```js
-var sceneGraph = fadeBetween(
-  0.25, // Linearly interpolate from 25% opacity.
-  0.75, // Linearly interpolate to 75% opacity.
-  46,   // Start fading at 46 seconds of elapsed time.
-  72,   // Stop fading at 72 seconds of elapsed time.
-  childSceneGraph,
-  function() { /* Executed at the end of the fading. */ }
-)
-```
-
-### Click
-
-Executes a callback (and subsequently re-renders) on clicking on any object emitted by a child scene graph.
-
-```js
-var sceneGraph = click(
-  childSceneGraph,
-  function () { /* Executed on clicking on the below child scene graph. */ }
-)
-```
-
-Note: if multiple calls are nested, only the inner-most handler will be used on clicking on its children:
-
-```js
-click([
-  childSceneGraphA,
-  click(
-    childSceneGraphB,
-    function() {
-      /* Called only on clicking on childSceneGraphB. */
-    }
-  ),
-  childSceneGraphC
-], function() {
-/* Called only on clicking on childSceneGraphA or childSceneGraphC. */
-})
-```
-
-### Delays
-
-Executes a callback (and subsequently re-renders) at a specified time.
-
-```js
-var sceneGraph = at(46, function () {
-  /* Called at 46 seconds of elapsed time. */
-})
-```
-
-### Batch
-
-Caches a complex child scene graph, meaning it is only generated once.
-
-```js
-var cached = batch(childSceneGraph)
-
-var sceneGraph = sprite("Object Name", cached)
-```
-
-### Pause
-
-Pauses a view's timer.  Has no effect if already paused.
-
-```js
-pause(viewReference)
-```
-
-### Resume
-
-Unpauses a view's timer.  Has no effect if not paused.
-
-```js
-resume(viewReference)
-```
-
-## Project Structure
-
-```
-|'- dist
-|   |'- (game name).zip
-|    '- (game name)
-|       |'- index.html
-|        '- index.js
- '- src
-    |'- bootloader
-    |   '- (**/*.js)
-    |'- engine
-    |   '- (**/*.js)
-     '- (game name)
-        |'- metadata.json
-        |'- icon.svg
-        |'- (**/*.js)
-         '- (**/*.svg)
-```
-
-### dist/(game name).zip
-
-A zip file containing every part of the corresponding game, minfied, but not
-including debugging tools.  Only produced by "one-off" builds.
-
-### dist/(game name)
-
-A directory containing every part of the corresponding game, including debugging
-tools, without much in the way of minification.  Only produced by "watch"
-builds.
-
-### src/bootloader/**/*.js
-
-All JavaScript in the "src/bootloader" directory (and its subdirectories) is
-loaded at startup, and is responsible for handling errors and loading all other
-content.
-
-### src/engine/**/*.js
-
-All JavaScript in the "src/engine" directory (and its subdirectories) is
-included in every game.  This is the runtime engine.  It is responsible for:
-
-- Timing.
-- DOM manipulation.
-- Input.
-- Save/load.
-- Debugging tools.
-- State management.
-
-### src/games/(game name)/metadata.json
-
-A JSON file describing that particular game.
-
-```json
-{
-  "name": "Game Name",
-  "description": "Game Description",
-  "developer": {
-    "name": "Developer Name",
-    "url": "https://example.com"
-  },
-  "width": 320,
-  "height": 180
-}
-```
-
-#### name
-
-Shown as the page title, and when "pinned" to the home screen of a mobile
-device.
-
-#### description
-
-A short description of the game, included in metadata.
-
-#### developer.name
-
-The name of the developer of the game, included in metadata.
-
-#### developer.url
-
-The URL of the developer of the game, included in metadata.
-
-#### width
-
-The number of units the "safe zone" is "wide" (see Coordinate Space).
-
-#### width
-
-The number of units the "safe zone" is "tall" (see Coordinate Space).
-
-### src/games/(game name)/icon.svg
-
-An icon to use; shown as a favicon, splash screen and when "pinned" to the home
-screen of a mobile devce.  Expected to be square.
-
-### src/games/(game name)/**/*.js
-
-Included as game code.  The order in which it is included is non-deterministic.
-
-### src/games/(game name)/**/*.svg
-
-Included in the `content` object.  If an Inkscape SVG with multiple layers is
-found, it is split into one piece of content per layer and their names are
-included in their file names; a file with a name of:
+If an Inkscape SVG with multiple layers is found, it is split into one piece of
+content per layer and their names are included in their file names; a file with
+a name of:
 
 `a/b/c.svg`
 
